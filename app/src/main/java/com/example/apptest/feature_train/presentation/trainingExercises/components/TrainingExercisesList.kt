@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.collect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
+import com.example.apptest.feature_train.presentation.trainingExercises.TrainingExercisesEvent
 
 @Composable
 fun TrainingExercisesList(
@@ -63,31 +64,16 @@ fun TrainingExercisesList(
                 .collectAsState(initial = null)
 
             exercise?.let { ex ->
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Text(
-                        text = ex.name,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    when (ex.exerciseType) {
-                        is ExerciseType.Reps -> {
-                            trainingExercise.reps?.let { reps ->
-                                Text(
-                                    text = "Reps: $reps",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
-                        is ExerciseType.Duration -> {
-                            trainingExercise.duration?.let { duration ->
-                                Text(
-                                    text = "Duration: $duration seconds",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
+                TrainingExerciseItem(
+                    trainingExerciseId = trainingExercise.id,
+                    exerciseName = ex.name,
+                    exerciseType = ex.exerciseType,
+                    reps = trainingExercise.reps,
+                    duration = trainingExercise.duration,
+                    onDelete = {
+                        viewModel.onEvent(TrainingExercisesEvent.DeleteTrainingExercise(trainingExercise))
                     }
-                    Divider(modifier = Modifier.padding(vertical = 4.dp))
-                }
+                )
             }
         }
     }

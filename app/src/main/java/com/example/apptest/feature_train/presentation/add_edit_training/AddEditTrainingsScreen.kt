@@ -213,6 +213,7 @@ fun AddEditTrainingsScreen(
                     val exercise by viewModel.getExercise(trainingExercise.exerciseId)
                         .collectAsState(initial = null)
                     TrainingExerciseItem(
+                        trainingExerciseId = trainingExercise.id,
                         exerciseName = exercise?.name ?: "Loading...",
                         exerciseType = exercise?.exerciseType ?: ExerciseType.Reps,
                         reps = trainingExercise.reps,

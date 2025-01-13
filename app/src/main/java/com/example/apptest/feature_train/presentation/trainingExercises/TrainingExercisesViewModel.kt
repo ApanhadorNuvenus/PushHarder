@@ -35,8 +35,8 @@ class TrainingExercisesViewModel @Inject constructor(
     private var getTrainingExercisesJob: Job? = null
 
     // state of this screen
-    private val _state = mutableStateOf(TrainingExercisesState())
-    val state: State<TrainingExercisesState> = _state
+//    private val _state = mutableStateOf(TrainingExercisesState())
+//    val state: State<TrainingExercisesState> = _state
     private var currentTrainingId: Int? = null
 
     init {
