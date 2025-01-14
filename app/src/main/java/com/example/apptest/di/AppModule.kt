@@ -4,11 +4,17 @@ import android.app.Application
 import androidx.room.Room
 import com.example.apptest.feature_train.data.data_source.TrainDatabase
 import com.example.apptest.feature_train.data.repository.ExerciseRepositoryImpl
+import com.example.apptest.feature_train.data.repository.ExerciseSetRepositoryImpl
 import com.example.apptest.feature_train.data.repository.TrainingExerciseRepositoryImpl
 import com.example.apptest.feature_train.data.repository.TrainingRepositoryImpl
 import com.example.apptest.feature_train.domain.repository.ExerciseRepository
+import com.example.apptest.feature_train.domain.repository.ExerciseSetRepository
 import com.example.apptest.feature_train.domain.repository.TrainingExerciseRepository
 import com.example.apptest.feature_train.domain.repository.TrainingRepository
+import com.example.apptest.feature_train.domain.use_case.exercise_set_use_cases.AddExerciseSet
+import com.example.apptest.feature_train.domain.use_case.exercise_set_use_cases.DeleteExerciseSet
+import com.example.apptest.feature_train.domain.use_case.exercise_set_use_cases.ExerciseSetUseCases
+import com.example.apptest.feature_train.domain.use_case.exercise_set_use_cases.GetSetsForTrainingExercise
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.AddExercise
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.DeleteExercise
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.ExerciseUseCases
@@ -42,6 +48,7 @@ object AppModule {
             TrainDatabase::class.java,
             TrainDatabase.DATABASE_NAME
         )
+            .fallbackToDestructiveMigration()
             .build()
     }
 
@@ -95,6 +102,23 @@ object AppModule {
             addTrainingExercise = AddTrainingExercise(trainingExerciseRepository),
             deleteTrainingExercise = DeleteTrainingExercise(trainingExerciseRepository),
             getExercisesForTraining = GetExercisesForTraining(trainingExerciseRepository)
+        )
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideExerciseSetRepository(db: TrainDatabase): ExerciseSetRepository {
+        return ExerciseSetRepositoryImpl(db.exerciseSetDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideExerciseSetUseCases(repository: ExerciseSetRepository): ExerciseSetUseCases {
+        return ExerciseSetUseCases(
+            getSetsForTrainingExercise = GetSetsForTrainingExercise(repository),
+            addExerciseSet = AddExerciseSet(repository),
+            deleteExerciseSet = DeleteExerciseSet(repository)
         )
     }
 }

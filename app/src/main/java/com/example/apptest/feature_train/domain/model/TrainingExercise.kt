@@ -16,10 +16,9 @@ import java.util.UUID
 data class TrainingExercise(
     val trainingId: String,
     val exerciseId: Int,
-    val reps: Int? = null,
-    val duration: Int? = null,
-    val weight: Double? = null,
-    val sets: Int? = null,
+//    reps and sets are moved to sets feature
+//    val reps: Int? = null,
+//    val sets: Int? = null,
     val failure: Boolean? = null, // Added nullable failure field
     @PrimaryKey val id: String = UUID.randomUUID().toString()
 )

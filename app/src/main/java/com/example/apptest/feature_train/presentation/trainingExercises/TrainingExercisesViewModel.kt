@@ -12,17 +12,12 @@ import com.example.apptest.feature_train.domain.model.TrainingExercise
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.ExerciseUseCases
 import com.example.apptest.feature_train.domain.use_case.trainingExercise_use_case.TrainingExerciseUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.example.apptest.feature_train.domain.model.ExerciseType
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.Dispatchers
 
 @HiltViewModel
 class TrainingExercisesViewModel @Inject constructor(
@@ -64,29 +59,14 @@ class TrainingExercisesViewModel @Inject constructor(
                     recentlyDeletedTrainingExercise = null
                 }
             }
-            is TrainingExercisesEvent.AddExercise -> {
+            is TrainingExercisesEvent.AddTrainingExercise -> {
                 viewModelScope.launch {
                     try {
-                        // Validate reps and duration based on exercise type
-                        when (event.exercise.exerciseType) {
-                            is ExerciseType.Reps -> {
-                                if (event.reps == null || event.reps <= 0) {
-                                    throw InvalidTrainingException("Reps must be greater than zero for Reps type exercises.")
-                                }
-                            }
-                            is ExerciseType.Duration -> {
-                                if (event.duration == null || event.duration <= 0) {
-                                    throw InvalidTrainingException("Duration must be greater than zero for Duration type exercises.")
-                                }
-                            }
-                        }
-
                         // Add the exercise to the training
+                        // sets are fetched on their own way, here we don't operate on them
                         val trainingExercise = TrainingExercise(
                             trainingId = event.trainingId,
-                            exerciseId = event.exercise.id ?: 0,
-                            reps = event.reps,
-                            duration = event.duration
+                            exerciseId = event.exercise.id ?: 0
                         )
 
                         trainingExerciseUseCases.addTrainingExercise(

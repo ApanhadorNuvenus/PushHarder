@@ -41,13 +41,6 @@ fun ExerciseItem(
                 maxLines = 1
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = when (exercise.exerciseType) {
-                    is ExerciseType.Reps -> "Reps"
-                    is ExerciseType.Duration -> "Duration"
-                },
-                style = MaterialTheme.typography.bodyMedium
-            )
         }
         IconButton(
             onClick = onDeleteClick,

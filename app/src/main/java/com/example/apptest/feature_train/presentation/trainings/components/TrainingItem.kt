@@ -109,6 +109,15 @@ fun TrainingItem(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+
+                ////// TRAINING EXERCISES OF THE TRAINING ////////
+                Box(
+                    modifier = Modifier
+                        .weight(1f) // Take remaining space
+                        .fillMaxWidth()
+                ) {
+                    TrainingExercisesList(trainingId = training.id)
+                }
             }
 
             // Delete button
@@ -136,66 +145,68 @@ fun TrainingItem(
                 )
             }
 
-            // Quick view dialog
-            if (showQuickView) {
-                Dialog(
-                    onDismissRequest = { showQuickView = false },
-                    properties = DialogProperties(usePlatformDefaultWidth = false)
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .fillMaxHeight(0.8f),
-                        shape = MaterialTheme.shapes.large,
-                        tonalElevation = 8.dp
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(16.dp)
-                        ) {
-                            // Header content (fixed)
-                            Column {
-                                Text(
-                                    text = training.title,
-                                    style = MaterialTheme.typography.headlineMedium
-                                )
-                                Text(
-                                    text = DateFormat.getDateInstance().format(training.date),
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                if (training.failure) {
-                                    Text("Failed Training", color = Color.Red)
-                                }
-                                Text("Weights: ${training.weights ?: "N/A"}")
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    "Exercises:",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-
-                            // Scrollable content (exercises list)
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f) // Take remaining space
-                                    .fillMaxWidth()
-                            ) {
-                                TrainingExercisesList(trainingId = training.id)
-                            }
-
-                            // Footer (fixed)
-                            Button(
-                                onClick = { showQuickView = false },
-                                modifier = Modifier
-                                    .align(Alignment.End)
-                                    .padding(top = 8.dp)
-                            ) {
-                                Text("Close")
-                            }
-                        }
-                    }
-                }
-            }
+            //
+            // QUICK VIEW DIALOG //
+            //
+//            if (showQuickView) {
+//                Dialog(
+//                    onDismissRequest = { showQuickView = false },
+//                    properties = DialogProperties(usePlatformDefaultWidth = false)
+//                ) {
+//                    Surface(
+//                        modifier = Modifier
+//                            .fillMaxWidth(0.9f)
+//                            .fillMaxHeight(0.8f),
+//                        shape = MaterialTheme.shapes.large,
+//                        tonalElevation = 8.dp
+//                    ) {
+//                        Column(
+//                            modifier = Modifier
+//                                .padding(16.dp)
+//                        ) {
+//                            // Header content (fixed)
+//                            Column {
+//                                Text(
+//                                    text = training.title,
+//                                    style = MaterialTheme.typography.headlineMedium
+//                                )
+//                                Text(
+//                                    text = DateFormat.getDateInstance().format(training.date),
+//                                    style = MaterialTheme.typography.bodyLarge
+//                                )
+//                                if (training.failure) {
+//                                    Text("Failed Training", color = Color.Red)
+//                                }
+//                                Text("Weights: ${training.weights ?: "N/A"}")
+//                                Spacer(modifier = Modifier.height(16.dp))
+//                                Text(
+//                                    "Exercises:",
+//                                    style = MaterialTheme.typography.titleMedium
+//                                )
+//                            }
+//
+//                            // Scrollable content (exercises list)
+//                            Box(
+//                                modifier = Modifier
+//                                    .weight(1f) // Take remaining space
+//                                    .fillMaxWidth()
+//                            ) {
+//                                TrainingExercisesList(trainingId = training.id)
+//                            }
+//
+//                            // Footer (fixed)
+//                            Button(
+//                                onClick = { showQuickView = false },
+//                                modifier = Modifier
+//                                    .align(Alignment.End)
+//                                    .padding(top = 8.dp)
+//                            ) {
+//                                Text("Close")
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         }
     }
 }

@@ -46,6 +46,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 
 
+// just a lazy column oof trainings
 @Composable
 fun TrainingsList(
     trainings: List<Training>,

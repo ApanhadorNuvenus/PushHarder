@@ -40,7 +40,7 @@ class AddEditExercisesViewModel @Inject constructor(
                             _exerciseState.value = exerciseState.value.copy(
                                 title = exercise.name,
                                 description = exercise.description ?: "",
-                                exerciseType = exercise.exerciseType,
+//                                exerciseType = exercise.exerciseType,
                                 exerciseId = exercise.id,
                                 isTitleHintVisible = false,
                                 isDescriptionHintVisible = exercise.description.isNullOrBlank()
@@ -51,7 +51,8 @@ class AddEditExercisesViewModel @Inject constructor(
                 _exerciseState.value = AddEditCurrentExerciseState(
                     title = "",
                     description = "",
-                    exerciseType = ExerciseType.Reps,
+//                    exerciseType = ExerciseType.Reps,
+                    // exercise id is set later, now it's null cause the exercise is a brand new one
                     isTitleHintVisible = true,
                     isDescriptionHintVisible = true
                 )
@@ -83,11 +84,11 @@ class AddEditExercisesViewModel @Inject constructor(
                     isDescriptionHintVisible = !event.focusState.isFocused && exerciseState.value.description.isBlank()
                 )
             }
-            is AddEditExercisesEvent.ChangeExerciseType -> {
-                _exerciseState.value = exerciseState.value.copy(
-                    exerciseType = event.exerciseType
-                )
-            }
+//            is AddEditExercisesEvent.ChangeExerciseType -> {
+//                _exerciseState.value = exerciseState.value.copy(
+//                    exerciseType = event.exerciseType
+//                )
+//            }
             is AddEditExercisesEvent.SaveExercise -> {
                 viewModelScope.launch {
                     try {
@@ -95,7 +96,7 @@ class AddEditExercisesViewModel @Inject constructor(
                             Exercise(
                                 name = exerciseState.value.title,
                                 description = exerciseState.value.description,
-                                exerciseType = exerciseState.value.exerciseType,
+//                                exerciseType = exerciseState.value.exerciseType,
                                 id = exerciseState.value.exerciseId
                             )
                         )

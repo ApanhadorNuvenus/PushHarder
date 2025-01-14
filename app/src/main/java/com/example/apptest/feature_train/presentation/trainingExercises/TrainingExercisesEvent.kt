@@ -6,7 +6,7 @@ import com.example.apptest.feature_train.domain.model.TrainingExercise
 sealed class TrainingExercisesEvent {
     data class DeleteTrainingExercise(val trainingExercise: TrainingExercise) : TrainingExercisesEvent()
     object RestoreExerciseTraining : TrainingExercisesEvent()
-    data class AddExercise(
+    data class AddTrainingExercise(
         val trainingId: String,
         val exercise: Exercise,
         val reps: Int?,

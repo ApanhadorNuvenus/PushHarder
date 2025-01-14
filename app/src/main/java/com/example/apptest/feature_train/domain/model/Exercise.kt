@@ -7,7 +7,8 @@ import androidx.room.PrimaryKey
 data class Exercise(
     val name: String,
     val description: String? = null,
-    val exerciseType: ExerciseType,
+    // no use for exercise type
+//    val exerciseType: ExerciseType,
     @PrimaryKey val id: Int? = null
 )
 

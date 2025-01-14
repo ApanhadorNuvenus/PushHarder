@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AirlineSeatReclineExtra
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,7 +69,7 @@ fun TrainingsScreen(
                     containerColor = MaterialTheme.colorScheme.primary
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Settings,
+                        imageVector = Icons.Default.AirlineSeatReclineExtra,
                         contentDescription = "Manage exercises"
                     )
                 }
@@ -132,6 +133,10 @@ fun TrainingsScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            //
+            // TRAINING LIST //
+            //
 
             TrainingsList(
                 trainings = state.trainings,

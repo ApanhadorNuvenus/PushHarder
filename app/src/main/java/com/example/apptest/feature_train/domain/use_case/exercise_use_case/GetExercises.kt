@@ -16,14 +16,14 @@ class GetExercises(private val repository: ExerciseRepository) {
                 is OrderType.Ascending -> {
                     when (exerciseOrder) {
                         is ExerciseOrder.Name -> exercises.sortedBy { it.name.lowercase() }
-                        is ExerciseOrder.Type -> exercises.sortedBy { it.exerciseType.toString() }
+//                        is ExerciseOrder.Type -> exercises.sortedBy { it.exerciseType.toString() }
                     }
                 }
 
                 is OrderType.Descending -> {
                     when (exerciseOrder) {
                         is ExerciseOrder.Name -> exercises.sortedByDescending { it.name.lowercase() }
-                        is ExerciseOrder.Type -> exercises.sortedByDescending { it.exerciseType.toString() }
+//                        is ExerciseOrder.Type -> exercises.sortedByDescending { it.exerciseType.toString() }
                     }
                 }
             }

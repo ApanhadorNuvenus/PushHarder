@@ -10,5 +10,5 @@ data class AddEditCurrentTrainingState(
     val trainingId: String = "",
     val isTitleHintVisible: Boolean = true,
     val isWeightHintVisible: Boolean = true,
-    val temporaryExercises: MutableList<TrainingExercise> = mutableListOf()
+    val trainingExercises: MutableList<TrainingExercise> = mutableListOf()
 )

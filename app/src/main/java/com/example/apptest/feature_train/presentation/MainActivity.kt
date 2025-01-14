@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
                     NavHost(
                         navController = navController,
                         startDestination = Screen.TrainingsScreen.route
+//                          startDestination = Screen.ExercisesScreen.route
                     ) {
                         composable(route = Screen.TrainingsScreen.route) {
                             TrainingsScreen(navController = navController)

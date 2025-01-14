@@ -9,7 +9,7 @@ data class Training(
     val title: String,
     val date: Long,
     val failure: Boolean = false,
-    val weights: Long? = null,
+    val weights: Float? = null,
     @PrimaryKey val id: String = UUID.randomUUID().toString() // Now a UUID string
 )
 

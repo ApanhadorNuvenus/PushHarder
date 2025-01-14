@@ -39,8 +39,8 @@ import androidx.navigation.NavController
 import com.example.apptest.feature_train.domain.util.ExerciseOrder
 import com.example.apptest.feature_train.domain.util.OrderType
 import com.example.apptest.feature_train.presentation.exercises.components.ExerciseItem
-import com.example.apptest.feature_train.presentation.exercises.components.ExerciseOrderSection
-import com.example.apptest.feature_train.presentation.exercises.components.ExerciseOrderSection
+//import com.example.apptest.feature_train.presentation.exercises.components.ExerciseOrderSection
+//import com.example.apptest.feature_train.presentation.exercises.components.ExerciseOrderSection
 import com.example.apptest.feature_train.presentation.util.Screen
 import kotlinx.coroutines.launch
 
@@ -100,15 +100,15 @@ fun ExercisesScreen(
                 enter = fadeIn() + slideInVertically(),
                 exit = fadeOut() + slideOutVertically()
             ) {
-                ExerciseOrderSection(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    exerciseOrder = state.exerciseOrder,
-                    onOrderChange = {
-                        viewModel.onEvent(ExercisesEvent.Order(it))
-                    }
-                )
+//                ExerciseOrderSection(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(vertical = 16.dp),
+//                    exerciseOrder = state.exerciseOrder,
+//                    onOrderChange = {
+//                        viewModel.onEvent(ExercisesEvent.Order(it))
+//                    }
+//                )
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn(modifier = Modifier.fillMaxSize()) {

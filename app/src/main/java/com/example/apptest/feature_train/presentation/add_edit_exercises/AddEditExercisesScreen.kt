@@ -26,7 +26,7 @@ fun AddEditExercisesScreen(
 ) {
     val titleState = viewModel.exerciseState.value
     val descriptionState = viewModel.exerciseState.value
-    val exerciseTypeState = viewModel.exerciseState.value.exerciseType
+//    val exerciseTypeState = viewModel.exerciseState.value.exerciseType
 
     val scaffoldState = remember { SnackbarHostState() }
 
@@ -100,58 +100,58 @@ fun AddEditExercisesScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Exercise Type Selection
-            ExerciseTypeSelector(
-                exerciseType = exerciseTypeState,
-                onTypeChange = {
-                    viewModel.onEvent(AddEditExercisesEvent.ChangeExerciseType(it))
-                }
-            )
+//            ExerciseTypeSelector(
+//                exerciseType = exerciseTypeState,
+//                onTypeChange = {
+//                    viewModel.onEvent(AddEditExercisesEvent.ChangeExerciseType(it))
+//                }
+//            )
         }
     }
 }
 
-@Composable
-fun ExerciseTypeSelector(
-    exerciseType: ExerciseType,
-    onTypeChange: (ExerciseType) -> Unit
-) {
-    var selectedType by remember { mutableStateOf(exerciseType) }
-
-    Column {
-        Text("Exercise Type:", style = MaterialTheme.typography.bodyMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row {
-            RadioButton(
-                selected = selectedType is ExerciseType.Reps,
-                onClick = {
-                    selectedType = ExerciseType.Reps
-                    onTypeChange(selectedType)
-                },
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = MaterialTheme.colorScheme.primary,
-                    unselectedColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-            Text("Reps")
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            RadioButton(
-                selected = selectedType is ExerciseType.Duration,
-                onClick = {
-                    selectedType = ExerciseType.Duration
-                    onTypeChange(selectedType)
-                },
-                colors = RadioButtonDefaults.colors(
-                    selectedColor = MaterialTheme.colorScheme.primary,
-                    unselectedColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
-            Text("Duration")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
+//@Composable
+//fun ExerciseTypeSelector(
+//    exerciseType: ExerciseType,
+//    onTypeChange: (ExerciseType) -> Unit
+//) {
+//    var selectedType by remember { mutableStateOf(exerciseType) }
+//
+//    Column {
+//        Text("Exercise Type:", style = MaterialTheme.typography.bodyMedium)
+//        Spacer(modifier = Modifier.height(8.dp))
+//
+//        Row {
+//            RadioButton(
+//                selected = selectedType is ExerciseType.Reps,
+//                onClick = {
+//                    selectedType = ExerciseType.Reps
+//                    onTypeChange(selectedType)
+//                },
+//                colors = RadioButtonDefaults.colors(
+//                    selectedColor = MaterialTheme.colorScheme.primary,
+//                    unselectedColor = MaterialTheme.colorScheme.onBackground
+//                )
+//            )
+//            Text("Reps")
+//
+//            Spacer(modifier = Modifier.width(16.dp))
+//
+//            RadioButton(
+//                selected = selectedType is ExerciseType.Duration,
+//                onClick = {
+//                    selectedType = ExerciseType.Duration
+//                    onTypeChange(selectedType)
+//                },
+//                colors = RadioButtonDefaults.colors(
+//                    selectedColor = MaterialTheme.colorScheme.primary,
+//                    unselectedColor = MaterialTheme.colorScheme.onBackground
+//                )
+//            )
+//            Text("Duration")
+//        }
+//
+//        Spacer(modifier = Modifier.height(8.dp))
 
 //        when (selectedType) {
 //            is ExerciseType.Reps -> {
@@ -179,5 +179,5 @@ fun ExerciseTypeSelector(
 //                )
 //            }
 //        }
-    }
-}
+//    }
+//}
