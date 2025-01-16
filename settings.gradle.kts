@@ -22,9 +22,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") } // Corrected line: Added closing parenthesis
     }
 }
 
 rootProject.name = "AppTest"
 include(":app")
- 

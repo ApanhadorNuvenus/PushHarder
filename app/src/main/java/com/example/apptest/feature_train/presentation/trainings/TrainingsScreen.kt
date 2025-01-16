@@ -45,11 +45,12 @@ import com.example.apptest.BuildConfig
 import com.example.apptest.feature_train.domain.model.Training
 import com.example.apptest.feature_train.presentation.trainings.components.OrderSection
 import com.example.apptest.feature_train.presentation.trainings.components.TrainingItem
-import com.example.apptest.feature_train.presentation.trainings.components.TrainingsList
 import com.example.apptest.feature_train.presentation.trainingExercises.components.TrainingExerciseList
 import com.example.apptest.feature_train.presentation.trainings.components.CoolTrainingsList
 import com.example.apptest.feature_train.presentation.util.Screen
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.Box
+import com.example.apptest.feature_train.presentation.trainings.components.LoadingOverlay
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +61,7 @@ fun TrainingsScreen(
 ) {
     val state by viewModel.state
     val trainingExercisesWithSets by viewModel.trainingExercisesWithSets.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState() // Collect the isLoading state
     var showDialog by remember { mutableStateOf(false) }
     var trainingToDelete by remember { mutableStateOf<Training?>(null) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -134,82 +136,87 @@ fun TrainingsScreen(
                 }
             }
         ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
+            Box(modifier = Modifier.fillMaxSize()) { // Add a Box to contain both content and overlay
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(8.dp)
                 ) {
-                    Text(
-                        text = "Trainings",
-                        style = MaterialTheme.typography.headlineMedium,
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = "Trainings",
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Button(onClick = { viewModel.onEvent(TrainingsEvent.ToggleOrderSection) }) {
+                            Text("Order")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+
+                    if (state.isOrderSectionVisible) {
+                        OrderSection(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp), // Reduced padding
+                            trainingOrder = state.trainingOrder,
+                            onOrderChange = {
+                                viewModel.onEvent(TrainingsEvent.Order(it))
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+
+                    CoolTrainingsList(
+                        trainings = state.trainings,
+                        onDeleteTraining = { training ->
+                            trainingToDelete = training
+                            showDialog = true
+                        },
+                        navController = navController,
+                        exerciseUseCases = viewModel.exerciseUseCases,
                         modifier = Modifier.weight(1f)
                     )
-                    Button(onClick = { viewModel.onEvent(TrainingsEvent.ToggleOrderSection) }) {
-                        Text("Order")
+
+                    if (showDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDialog = false },
+                            title = { Text("Confirm Deletion") },
+                            text = { Text("Are you sure you want to delete this training?") },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        trainingToDelete?.let {
+                                            viewModel.onEvent(TrainingsEvent.DeleteTraining(it))
+                                        }
+                                        showDialog = false
+                                        trainingToDelete = null
+                                    }
+                                ) {
+                                    Text("Delete")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = {
+                                        showDialog = false
+                                        trainingToDelete = null
+                                    }
+                                ) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
-
-                if (state.isOrderSectionVisible) {
-                    OrderSection(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp), // Reduced padding
-                        trainingOrder = state.trainingOrder,
-                        onOrderChange = {
-                            viewModel.onEvent(TrainingsEvent.Order(it))
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
-
-                CoolTrainingsList(
-                    trainings = state.trainings,
-                    onDeleteTraining = { training ->
-                        trainingToDelete = training
-                        showDialog = true
-                    },
-                    navController = navController,
-                    exerciseUseCases = viewModel.exerciseUseCases,
-                    modifier = Modifier.weight(1f)
-                )
-
-                if (showDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showDialog = false },
-                        title = { Text("Confirm Deletion") },
-                        text = { Text("Are you sure you want to delete this training?") },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    trainingToDelete?.let {
-                                        viewModel.onEvent(TrainingsEvent.DeleteTraining(it))
-                                    }
-                                    showDialog = false
-                                    trainingToDelete = null
-                                }
-                            ) {
-                                Text("Delete")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    showDialog = false
-                                    trainingToDelete = null
-                                }
-                            ) {
-                                Text("Cancel")
-                            }
-                        }
-                    )
-                }
+                // Conditionally display the LoadingOverlay
+                LoadingOverlay(isVisible = isLoading)
             }
         }
     }

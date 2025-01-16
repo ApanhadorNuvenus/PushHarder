@@ -109,6 +109,16 @@ dependencies {
 //    val compose_version = "1.6.7"
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.hilt.navigation.compose)
+
+//    implementation("com.patrykandpatrick.vico:compose-m3:1.16.0")
+//    implementation("com.patrykandpatrick.vico:compose-chart:1.16.0")
+//    implementation("com.patrykandpatrick.vico:core:1.16.0")
+
+//    implementation(libs.mpandroidchart) // Add this line
+    implementation (libs.mpandroidchart)
+
+    // Accompanist to use with MPAndroidChart (for Compose integration)
+    implementation (libs.accompanist.systemuicontroller)
 }
 
 kapt {

@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import com.example.apptest.feature_train.presentation.add_edit_exercise.AddEditExercisesScreen
 import com.example.apptest.feature_train.presentation.add_edit_training.AddEditTrainingsScreen
 import com.example.apptest.feature_train.presentation.exercises.ExercisesScreen
+import com.example.apptest.feature_train.presentation.stats.StatsScreen
 import com.example.apptest.feature_train.presentation.trainings.TrainingsScreen
 import com.example.apptest.feature_train.presentation.util.Screen
 import com.example.apptest.ui.theme.AppTestTheme
@@ -35,6 +36,10 @@ class MainActivity : ComponentActivity() {
                         startDestination = Screen.TrainingsScreen.route
 //                          startDestination = Screen.ExercisesScreen.route
                     ) {
+                        composable(route = Screen.StatsScreen.route){
+                            StatsScreen(navController = navController)
+                        }
+
                         composable(route = Screen.TrainingsScreen.route) {
                             TrainingsScreen(navController = navController)
                         }
