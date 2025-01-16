@@ -40,7 +40,13 @@ fun ExerciseItem(
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = exercise.goal?.toString() ?: "No dreams on this topic...",
+                style = MaterialTheme.typography.headlineSmall,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1
+            )
         }
         IconButton(
             onClick = onDeleteClick,

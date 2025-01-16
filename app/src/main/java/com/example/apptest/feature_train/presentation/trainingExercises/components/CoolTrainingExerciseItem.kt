@@ -17,11 +17,17 @@ fun CoolTrainingExerciseItem(
     modifier: Modifier = Modifier
 ) {
     val totalReps = sets.sumOf { it.reps ?: 0 }
-    val maxReps = 250 // Maximum reps for any exercise
-    val progress = totalReps.coerceAtMost(maxReps) / maxReps.toFloat() // Progress value (0.0 to 1.0)
+    val maxRepsInSet = sets.maxOfOrNull { it.reps ?: 0 } ?: 0
+    val exerciseGoal = exercise?.goal
+    val progress = if (exerciseGoal != null && exerciseGoal != 0) {
+        maxRepsInSet.toFloat() / exerciseGoal.toFloat()
+    } else {
+        1f
+    }
 
-    // Define a color for the bar (you can customize this)
+    // Define colors for the bar
     val barColor = Color(0xFF4CAF50) // Example: Green color
+    val desaturatedBarColor = Color(0xFF4CAF50).copy(alpha = 0.3f)
 
     Card(
         modifier = modifier
@@ -46,18 +52,33 @@ fun CoolTrainingExerciseItem(
                         modifier = Modifier.weight(1f)
                     )
                 }
-                Text(
-                    text = "$totalReps reps",
-                    style = MaterialTheme.typography.bodyMedium
-                )
             }
+
             Spacer(modifier = Modifier.height(4.dp))
 
             // LinearProgressIndicator
-            LinearProgressIndicator(
-                progress = progress,
-                modifier = Modifier.fillMaxWidth(),
-                color = barColor
+            val formattedProgress = String.format("%.1f", (progress * 100).coerceAtMost(100f))
+            Row(modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LinearProgressIndicator(
+                    progress = progress.coerceIn(0f, 1f),
+                    modifier = Modifier.weight(1f),
+                    color = if (exerciseGoal != null) barColor else desaturatedBarColor,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (exerciseGoal != null) {
+                        "$maxRepsInSet/${exerciseGoal}"
+                    } else {
+                        "$maxRepsInSet"
+                    },
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Text(
+                text = "All: $totalReps",
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }

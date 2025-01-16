@@ -24,7 +24,7 @@ fun CoolTrainingsList(
     modifier: Modifier = Modifier,
     viewModel: TrainingsViewModel = hiltViewModel()
 ) {
-    Text("COOL TRAININ GS LIST")
+    Text("COOL TRAININGS LIST")
     LazyColumn(
         modifier = modifier
     ) {

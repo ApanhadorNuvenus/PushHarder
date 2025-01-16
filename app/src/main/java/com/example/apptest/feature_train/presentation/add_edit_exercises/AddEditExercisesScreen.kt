@@ -26,13 +26,13 @@ fun AddEditExercisesScreen(
 ) {
     val titleState = viewModel.exerciseState.value
     val descriptionState = viewModel.exerciseState.value
-//    val exerciseTypeState = viewModel.exerciseState.value.exerciseType
+    val goalState = viewModel.exerciseState.value
 
     val scaffoldState = remember { SnackbarHostState() }
 
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
-            when(event) {
+            when (event) {
                 is AddEditExercisesViewModel.UiEvent.ShowSnackbar -> {
                     scaffoldState.showSnackbar(
                         message = event.message
@@ -99,85 +99,21 @@ fun AddEditExercisesScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Exercise Type Selection
-//            ExerciseTypeSelector(
-//                exerciseType = exerciseTypeState,
-//                onTypeChange = {
-//                    viewModel.onEvent(AddEditExercisesEvent.ChangeExerciseType(it))
-//                }
-//            )
+            // Goal
+            TransparentHintTextField(
+                text = goalState.goal?.toString() ?: "",
+                hint = "Enter goal...",
+                isHintVisible = goalState.isGoalHintVisible,
+                onValueChange = {
+                    viewModel.onEvent(AddEditExercisesEvent.EnteredGoal(it))
+                },
+                onFocusChange = {
+                    viewModel.onEvent(AddEditExercisesEvent.ChangeGoalFocus(it))
+                },
+                textStyle = MaterialTheme.typography.bodyMedium,
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
-
-//@Composable
-//fun ExerciseTypeSelector(
-//    exerciseType: ExerciseType,
-//    onTypeChange: (ExerciseType) -> Unit
-//) {
-//    var selectedType by remember { mutableStateOf(exerciseType) }
-//
-//    Column {
-//        Text("Exercise Type:", style = MaterialTheme.typography.bodyMedium)
-//        Spacer(modifier = Modifier.height(8.dp))
-//
-//        Row {
-//            RadioButton(
-//                selected = selectedType is ExerciseType.Reps,
-//                onClick = {
-//                    selectedType = ExerciseType.Reps
-//                    onTypeChange(selectedType)
-//                },
-//                colors = RadioButtonDefaults.colors(
-//                    selectedColor = MaterialTheme.colorScheme.primary,
-//                    unselectedColor = MaterialTheme.colorScheme.onBackground
-//                )
-//            )
-//            Text("Reps")
-//
-//            Spacer(modifier = Modifier.width(16.dp))
-//
-//            RadioButton(
-//                selected = selectedType is ExerciseType.Duration,
-//                onClick = {
-//                    selectedType = ExerciseType.Duration
-//                    onTypeChange(selectedType)
-//                },
-//                colors = RadioButtonDefaults.colors(
-//                    selectedColor = MaterialTheme.colorScheme.primary,
-//                    unselectedColor = MaterialTheme.colorScheme.onBackground
-//                )
-//            )
-//            Text("Duration")
-//        }
-//
-//        Spacer(modifier = Modifier.height(8.dp))
-
-//        when (selectedType) {
-//            is ExerciseType.Reps -> {
-//                var reps by remember { mutableStateOf(if (exerciseType is ExerciseType.Reps) exerciseType.reps else 0) }
-//                TextField(
-//                    value = reps.toString(),
-//                    onValueChange = { newValue ->
-//                        reps = newValue.toIntOrNull() ?: 0
-//                        onTypeChange(ExerciseType.Reps(reps))
-//                    },
-//                    label = { Text("Reps") },
-//                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-//                )
-//            }
-//            is ExerciseType.Duration -> {
-//                var duration by remember { mutableStateOf(if (exerciseType is ExerciseType.Duration) exerciseType.time else 0) }
-//                TextField(
-//                    value = duration.toString(),
-//                    onValueChange = { newValue ->
-//                        duration = newValue.toIntOrNull() ?: 0
-//                        onTypeChange(ExerciseType.Duration(duration))
-//                    },
-//                    label = { Text("Duration (seconds)") },
-//                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-//                )
-//            }
-//        }
-//    }
-//}

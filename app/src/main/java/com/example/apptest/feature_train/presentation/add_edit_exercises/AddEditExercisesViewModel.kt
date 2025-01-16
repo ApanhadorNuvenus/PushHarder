@@ -6,7 +6,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.apptest.feature_train.domain.model.Exercise
-import com.example.apptest.feature_train.domain.model.ExerciseType
 import com.example.apptest.feature_train.domain.model.InvalidExerciseException
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.ExerciseUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,16 +33,17 @@ class AddEditExercisesViewModel @Inject constructor(
             if (exerciseId != -1) {
                 viewModelScope.launch {
                     exerciseUseCases.getExerciseById(exerciseId)
-                        .filterNotNull() // Filter out null emissions
-                        .first() // Take only the first non-null emission
+                        .filterNotNull()
+                        .first()
                         .let { exercise ->
                             _exerciseState.value = exerciseState.value.copy(
                                 title = exercise.name,
+                                goal = exercise.goal,
                                 description = exercise.description ?: "",
-//                                exerciseType = exercise.exerciseType,
                                 exerciseId = exercise.id,
                                 isTitleHintVisible = false,
-                                isDescriptionHintVisible = exercise.description.isNullOrBlank()
+                                isDescriptionHintVisible = exercise.description.isNullOrBlank(),
+                                isGoalHintVisible = exercise.goal == null
                             )
                         }
                 }
@@ -51,17 +51,17 @@ class AddEditExercisesViewModel @Inject constructor(
                 _exerciseState.value = AddEditCurrentExerciseState(
                     title = "",
                     description = "",
-//                    exerciseType = ExerciseType.Reps,
-                    // exercise id is set later, now it's null cause the exercise is a brand new one
+                    goal = null,
                     isTitleHintVisible = true,
-                    isDescriptionHintVisible = true
+                    isDescriptionHintVisible = true,
+                    isGoalHintVisible = true
                 )
             }
         }
     }
 
     fun onEvent(event: AddEditExercisesEvent) {
-        when(event) {
+        when (event) {
             is AddEditExercisesEvent.EnteredTitle -> {
                 _exerciseState.value = exerciseState.value.copy(
                     title = event.value,
@@ -84,11 +84,17 @@ class AddEditExercisesViewModel @Inject constructor(
                     isDescriptionHintVisible = !event.focusState.isFocused && exerciseState.value.description.isBlank()
                 )
             }
-//            is AddEditExercisesEvent.ChangeExerciseType -> {
-//                _exerciseState.value = exerciseState.value.copy(
-//                    exerciseType = event.exerciseType
-//                )
-//            }
+            is AddEditExercisesEvent.EnteredGoal -> {
+                _exerciseState.value = exerciseState.value.copy(
+                    goal = event.value.toIntOrNull(),
+                    isGoalHintVisible = event.value.isBlank()
+                )
+            }
+            is AddEditExercisesEvent.ChangeGoalFocus -> {
+                _exerciseState.value = exerciseState.value.copy(
+                    isGoalHintVisible = !event.focusState.isFocused && exerciseState.value.goal == null
+                )
+            }
             is AddEditExercisesEvent.SaveExercise -> {
                 viewModelScope.launch {
                     try {
@@ -96,7 +102,7 @@ class AddEditExercisesViewModel @Inject constructor(
                             Exercise(
                                 name = exerciseState.value.title,
                                 description = exerciseState.value.description,
-//                                exerciseType = exerciseState.value.exerciseType,
+                                goal = exerciseState.value.goal,
                                 id = exerciseState.value.exerciseId
                             )
                         )
