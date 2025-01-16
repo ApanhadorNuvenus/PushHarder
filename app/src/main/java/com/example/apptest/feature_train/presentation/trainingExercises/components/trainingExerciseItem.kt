@@ -1,17 +1,7 @@
 package com.example.apptest.feature_train.presentation.trainingExercises.components
 
-import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,61 +9,57 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.apptest.feature_train.domain.model.Exercise
 import com.example.apptest.feature_train.domain.model.ExerciseSet
+import com.example.apptest.feature_train.domain.model.TrainingExercise
+import com.example.apptest.feature_train.domain.use_case.exercise_use_case.ExerciseUseCases
 
-// In your add_edit_training package or a common components package
 @Composable
 fun TrainingExerciseItem(
-    exercise: Exercise,
+    trainingExercise: TrainingExercise,
     sets: List<ExerciseSet>,
-    modifier: Modifier = Modifier
+    exercise: Exercise?,
+    exerciseUseCases: ExerciseUseCases,
+    modifier: Modifier = Modifier,
 ) {
-    Log.d("TrainingExerciseItem", "Displaying item for exercise: ${exercise.name}, sets: $sets")
-
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            .padding(horizontal = 4.dp, vertical = 2.dp), // Reduced card padding
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp) // Reduced elevation
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(8.dp) // Reduced column padding
                 .fillMaxWidth()
         ) {
-            // Exercise Header
+            // Training Exercise Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = exercise.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                exercise?.let {
+                    Text(
+                        text = it.name,
+                        style = MaterialTheme.typography.bodyLarge, // Smaller font
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp)) // Reduced spacing
 
             // Sets List
-            sets.forEach { set ->
-                Log.d("TrainingExerciseItem", "Displaying set: $set")
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            Column {
+                sets.forEach { set ->
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp), // Reduced padding
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Set ${set.setNumber}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = "${set.reps ?: "?"} reps",
+                            text = "Set ${set.setNumber}: ${set.reps} reps", // More concise
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }

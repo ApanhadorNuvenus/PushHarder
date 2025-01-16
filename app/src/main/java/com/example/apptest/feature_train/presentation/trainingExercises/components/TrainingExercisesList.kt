@@ -1,56 +1,34 @@
 package com.example.apptest.feature_train.presentation.trainingExercises.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.apptest.feature_train.domain.model.Exercise
-import com.example.apptest.feature_train.domain.model.ExerciseSet
-import com.example.apptest.feature_train.presentation.exerciseSets.ExerciseSetsViewModel
-import com.example.apptest.feature_train.presentation.trainingExercises.TrainingExercisesViewModel
+import com.example.apptest.feature_train.domain.use_case.exercise_use_case.ExerciseUseCases
+import com.example.apptest.feature_train.presentation.trainingExercises.TrainingExerciseWithSets
 
 @Composable
-fun TrainingExercisesList(
-    trainingId: String,
-    exerciseSetViewModel: ExerciseSetsViewModel = hiltViewModel(),
-    viewModel: TrainingExercisesViewModel = hiltViewModel()
+fun TrainingExerciseList(
+    trainingExercisesWithSets: List<TrainingExerciseWithSets>,
+    exerciseUseCases: ExerciseUseCases = hiltViewModel(),
+    maxItemsToShow: Int = Int.MAX_VALUE // Show all by default
 ) {
-    val exercises by viewModel.getTrainingExercises(trainingId)
-        .collectAsState(initial = emptyList())
-
-    // Fetch sets for all exercises at once
-    LaunchedEffect(exercises) { // Key by exercises so it re-triggers if exercises change
-        exercises.forEach { trainingExercise ->
-            exerciseSetViewModel.loadSets(trainingExercise.id)
-        }
-    }
-
-    LazyColumn {
-        items(exercises) { trainingExercise ->
-            // Fetch the Exercise for each TrainingExercise
-            val exercise by viewModel.getExercise(trainingExercise.exerciseId)
-                .collectAsState(initial = null)
-
-            // Get the sets for this specific TrainingExercise
-            val sets by exerciseSetViewModel.getSetsForExercise(trainingExercise.id)
-                .collectAsState(initial = emptyList())
-
-            exercise?.let { ex ->
-                TrainingExerciseItem(
-                    exercise = ex,
-                    sets = sets
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
+    val itemsToShow = trainingExercisesWithSets.take(maxItemsToShow)
+    Column {
+        itemsToShow.forEach { item ->
+            TrainingExerciseItem(
+                trainingExercise = item.trainingExercise,
+                sets = item.sets,
+                exercise = item.exercise,
+                exerciseUseCases = exerciseUseCases,
+            )
+            Spacer(modifier = Modifier.height(4.dp)) // Reduced spacing
         }
     }
 }

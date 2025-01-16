@@ -1,12 +1,6 @@
 package com.example.apptest.feature_train.presentation.trainings
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,151 +12,205 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AirlineSeatReclineExtra
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.apptest.feature_train.domain.util.OrderType
-import com.example.apptest.feature_train.domain.util.TrainingOrder
+import com.example.apptest.BuildConfig
+import com.example.apptest.feature_train.domain.model.Training
 import com.example.apptest.feature_train.presentation.trainings.components.OrderSection
 import com.example.apptest.feature_train.presentation.trainings.components.TrainingItem
 import com.example.apptest.feature_train.presentation.trainings.components.TrainingsList
+import com.example.apptest.feature_train.presentation.trainingExercises.components.TrainingExerciseList
+import com.example.apptest.feature_train.presentation.trainings.components.CoolTrainingsList
 import com.example.apptest.feature_train.presentation.util.Screen
 import kotlinx.coroutines.launch
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrainingsScreen(
     navController: NavController,
     viewModel: TrainingsViewModel = hiltViewModel()
 ) {
-    val state = viewModel.state.value
-    val snackbarHostState = remember { SnackbarHostState() }
+    val state by viewModel.state
+    val trainingExercisesWithSets by viewModel.trainingExercisesWithSets.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
+    var trainingToDelete by remember { mutableStateOf<Training?>(null) }
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            Column {
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate(Screen.ExercisesScreen.route)
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AirlineSeatReclineExtra,
-                        contentDescription = "Manage exercises"
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Workout Tracker", style = MaterialTheme.typography.headlineMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    NavigationDrawerItem(
+                        label = { Text("Trainings") },
+                        selected = true, // Highlight because this is the Trainings screen
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            // We are already on the Trainings screen, so no navigation needed
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Filled.Menu,
+                                contentDescription = "Trainings"
+                            )
+                        }
                     )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate(Screen.AddEditTrainingScreen.route)
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add training"
+                    NavigationDrawerItem(
+                        label = { Text("Exercises") },
+                        selected = false,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            navController.navigate(Screen.ExercisesScreen.route)
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Filled.FitnessCenter,
+                                contentDescription = "Exercises"
+                            )
+                        }
+                    )
+                    Spacer(modifier = Modifier.weight(1f)) // Push the version info to the bottom
+                    Text(
+                        text = "Version: ${BuildConfig.VERSION_NAME}", // Display app version
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Your Trainings",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                IconButton(
-                    onClick = {
-                        viewModel.onEvent(TrainingsEvent.ToggleOrderSection)
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Trainings") },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Filled.Menu, contentDescription = "Open drawer")
+                        }
                     }
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        navController.navigate(
+                            "add_edit_training_screen"
+                        )
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Sort,
-                        contentDescription = "Sort"
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add training")
+                }
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = "Trainings",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Button(onClick = { viewModel.onEvent(TrainingsEvent.ToggleOrderSection) }) {
+                        Text("Order")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+
+                if (state.isOrderSectionVisible) {
+                    OrderSection(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp), // Reduced padding
+                        trainingOrder = state.trainingOrder,
+                        onOrderChange = {
+                            viewModel.onEvent(TrainingsEvent.Order(it))
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+
+                CoolTrainingsList(
+                    trainings = state.trainings,
+                    onDeleteTraining = { training ->
+                        trainingToDelete = training
+                        showDialog = true
+                    },
+                    navController = navController,
+                    exerciseUseCases = viewModel.exerciseUseCases,
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        title = { Text("Confirm Deletion") },
+                        text = { Text("Are you sure you want to delete this training?") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    trainingToDelete?.let {
+                                        viewModel.onEvent(TrainingsEvent.DeleteTraining(it))
+                                    }
+                                    showDialog = false
+                                    trainingToDelete = null
+                                }
+                            ) {
+                                Text("Delete")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    showDialog = false
+                                    trainingToDelete = null
+                                }
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
                     )
                 }
             }
-
-            AnimatedVisibility(
-                visible = state.isOrderSectionVisible,
-                enter = fadeIn() + slideInVertically(),
-                exit = fadeOut() + slideOutVertically()
-            ) {
-                OrderSection(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    trainingOrder = state.trainingOrder,
-                    onOrderChange = {
-                        viewModel.onEvent(TrainingsEvent.Order(it))
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            //
-            // TRAINING LIST //
-            //
-
-            TrainingsList(
-                trainings = state.trainings,
-                onDeleteClick = { training ->
-                    viewModel.onEvent(TrainingsEvent.DeleteTraining(training))
-                    scope.launch {
-                        val result = snackbarHostState.showSnackbar(
-                            message = "Training deleted",
-                            actionLabel = "Undo",
-                            duration = SnackbarDuration.Short
-                        )
-                        if (result == SnackbarResult.ActionPerformed) {
-                            viewModel.onEvent(TrainingsEvent.RestoreTraining)
-                        }
-                    }
-                },
-                onEditClick = { training ->
-                    navController.navigate(
-                        Screen.AddEditTrainingScreen.route +
-                                "?trainingId=${training.id}"
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
         }
     }
 }

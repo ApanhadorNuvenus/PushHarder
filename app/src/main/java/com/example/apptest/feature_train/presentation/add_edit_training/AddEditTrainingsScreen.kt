@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -30,7 +31,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,15 +50,12 @@ fun AddEditTrainingsScreen(
     viewModel: AddEditTrainingsViewModel = hiltViewModel()
 ) {
     val trainingState = viewModel.trainingState.value
+    val trainingExercisesWithSets by viewModel.trainingExercisesWithSets.collectAsState()
     val scaffoldState = remember { SnackbarHostState() }
     var showAddExerciseDialog by remember { mutableStateOf(false) }
     var showAddSetDialog by remember { mutableStateOf(false) }
-    var selectedExercise by remember { mutableStateOf<Exercise?>(null) }
-    var selectedTrainingExercise by remember { mutableStateOf<TrainingExercise?>(null) }
+    var selectedExerciseForSet by remember { mutableStateOf<TrainingExercise?>(null) }
     var exercises by remember { mutableStateOf(emptyList<Exercise>()) }
-    val trainingExerciseSets by viewModel.trainingExerciseSets.collectAsState()
-
-    val scope = rememberCoroutineScope()
 
     // Collect exercises for the dropdown
     LaunchedEffect(key1 = viewModel) {
@@ -73,9 +70,8 @@ fun AddEditTrainingsScreen(
                         message = event.message
                     )
                 }
-                is AddEditTrainingsViewModel.UiEvent.PromptForSet -> {
-                    selectedTrainingExercise = event.trainingExercise
-                    showAddSetDialog = true
+                is AddEditTrainingsViewModel.UiEvent.SaveTraining -> {
+                    navController.navigateUp()
                 }
             }
         }
@@ -85,10 +81,10 @@ fun AddEditTrainingsScreen(
         snackbarHost = { SnackbarHost(scaffoldState) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showAddExerciseDialog = true },
+                onClick = { viewModel.onEvent(AddEditTrainingsEvent.SaveTraining) },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add exercise")
+                Icon(imageVector = Icons.Default.Save, contentDescription = "Save training")
             }
         }
     ) { padding ->
@@ -127,26 +123,36 @@ fun AddEditTrainingsScreen(
             ) {
                 Checkbox(
                     checked = trainingState.failure,
-                    onCheckedChange = { viewModel.onEvent(AddEditTrainingsEvent.ChangeFailureState(it)) }
+                    onCheckedChange = {
+                        viewModel.onEvent(
+                            AddEditTrainingsEvent.ChangeFailureState(
+                                it
+                            )
+                        )
+                    }
                 )
                 Text(text = "Failure")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Using ExtendedTrainingExerciseList
+            Button(onClick = { showAddExerciseDialog = true }) {
+                Text("Add Exercise")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             ExtendedTrainingExerciseList(
-                trainingExercises = trainingState.trainingExercises,
-                trainingExerciseSets = trainingExerciseSets,
+                trainingExercisesWithSets = trainingExercisesWithSets,
                 onAddSet = { trainingExercise ->
-                    selectedTrainingExercise = trainingExercise
+                    selectedExerciseForSet = trainingExercise
                     showAddSetDialog = true
                 },
-                onDeleteSet = {  set ->
-                    viewModel.onEvent(AddEditTrainingsEvent.DeleteSet(set))
+                onDeleteSet = { set ->
+                    viewModel.onEvent(AddEditTrainingsEvent.DeleteSetFromExercise(set.trainingExerciseId, set.id))
                 },
                 onDeleteTrainingExercise = { trainingExercise ->
-                    viewModel.onEvent(AddEditTrainingsEvent.DeleteTrainingExercise(trainingExercise))
+                    viewModel.onEvent(AddEditTrainingsEvent.DeleteTrainingExercise(trainingExercise.id))
                 },
                 exerciseUseCases = viewModel.exerciseUseCases
             )
@@ -164,9 +170,8 @@ fun AddEditTrainingsScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            selectedExercise = exercise
-                                            showAddExerciseDialog = false
                                             viewModel.onEvent(AddEditTrainingsEvent.AddExercise(exercise))
+                                            showAddExerciseDialog = false
                                         }
                                         .padding(8.dp)
                                 )
@@ -174,16 +179,6 @@ fun AddEditTrainingsScreen(
                         }
                     },
                     confirmButton = {
-                        TextButton(onClick = {
-                            selectedExercise?.let {
-                                viewModel.onEvent(AddEditTrainingsEvent.AddExercise(it))
-                            }
-                            showAddExerciseDialog = false
-                        }) {
-                            Text("Add")
-                        }
-                    },
-                    dismissButton = {
                         TextButton(onClick = { showAddExerciseDialog = false }) {
                             Text("Cancel")
                         }
@@ -191,7 +186,8 @@ fun AddEditTrainingsScreen(
                 )
             }
 
-            if (showAddSetDialog) {
+            // Dialog for adding a new set
+            if (showAddSetDialog && selectedExerciseForSet != null) {
                 var newSetNumber by remember { mutableStateOf(1) }
                 var newSetReps by remember { mutableStateOf(0) }
 
@@ -218,16 +214,19 @@ fun AddEditTrainingsScreen(
                     },
                     confirmButton = {
                         Button(onClick = {
-                            selectedTrainingExercise?.let { trainingExercise ->
-                                viewModel.onEvent(AddEditTrainingsEvent.AddSet(trainingExercise, newSetNumber, newSetReps))
+                            selectedExerciseForSet?.let {
+                                viewModel.onEvent(
+                                    AddEditTrainingsEvent.AddSetToExercise(it.id, newSetNumber, newSetReps)
+                                )
                                 showAddSetDialog = false
+                                selectedExerciseForSet = null
                             }
                         }) {
                             Text("Add")
                         }
                     },
                     dismissButton = {
-                        Button(onClick = { showAddSetDialog = false }) {
+                        Button(onClick = { showAddSetDialog = false; selectedExerciseForSet = null }) {
                             Text("Cancel")
                         }
                     }

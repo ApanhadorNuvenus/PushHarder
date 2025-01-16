@@ -11,8 +11,9 @@ sealed class AddEditTrainingsEvent {
     data class EnteredWeight(val value: String) : AddEditTrainingsEvent()
     data class ChangeWeightFocus(val focusState: FocusState) : AddEditTrainingsEvent()
     data class ChangeFailureState(val value: Boolean) : AddEditTrainingsEvent()
+    object SaveTraining : AddEditTrainingsEvent()
     data class AddExercise(val exercise: Exercise) : AddEditTrainingsEvent()
-    data class AddSet(val trainingExercise: TrainingExercise, val setNumber: Int, val reps: Int) : AddEditTrainingsEvent()
-    data class DeleteSet(val exerciseSet: ExerciseSet) : AddEditTrainingsEvent()
-    data class DeleteTrainingExercise(val trainingExercise: TrainingExercise) : AddEditTrainingsEvent()
+    data class AddSetToExercise(val trainingExerciseId: String, val setNumber: Int, val reps: Int) : AddEditTrainingsEvent()
+    data class DeleteSetFromExercise(val trainingExerciseId: String, val setId: String) : AddEditTrainingsEvent()
+    data class DeleteTrainingExercise(val trainingExerciseId: String) : AddEditTrainingsEvent()
 }

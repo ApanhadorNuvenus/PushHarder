@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -15,7 +16,7 @@ import com.example.apptest.feature_train.domain.use_case.exercise_use_case.Exerc
 import com.example.apptest.feature_train.presentation.trainings.TrainingsViewModel
 
 @Composable
-fun TrainingsList(
+fun CoolTrainingsList(
     trainings: List<Training>,
     navController: NavController,
     onDeleteTraining: (Training) -> Unit,
@@ -23,18 +24,19 @@ fun TrainingsList(
     modifier: Modifier = Modifier,
     viewModel: TrainingsViewModel = hiltViewModel()
 ) {
+    Text("COOL TRAININ GS LIST")
     LazyColumn(
         modifier = modifier
     ) {
         items(trainings) { training ->
-            TrainingItem(
+            CoolTrainingItem(
                 training = training,
                 navController = navController,
                 onDeleteTraining = { onDeleteTraining(training) },
                 exerciseUseCases = exerciseUseCases,
                 viewModel = viewModel
             )
-            Spacer(modifier = Modifier.height(4.dp)) // Reduced spacing
+            Spacer(modifier = Modifier.height(4.dp))
         }
     }
 }

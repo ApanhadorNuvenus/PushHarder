@@ -1,46 +1,49 @@
 package com.example.apptest.feature_train.presentation.trainingExercises
 
 import android.util.Log
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.apptest.feature_train.domain.model.Exercise
 import com.example.apptest.feature_train.domain.model.InvalidTrainingException
 import com.example.apptest.feature_train.domain.model.TrainingExercise
+import com.example.apptest.feature_train.domain.use_case.exercise_set_use_cases.ExerciseSetUseCases
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.ExerciseUseCases
 import com.example.apptest.feature_train.domain.use_case.trainingExercise_use_case.TrainingExerciseUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class TrainingExercisesViewModel @Inject constructor(
     private val trainingExerciseUseCases: TrainingExerciseUseCases,
-    val exerciseUseCases: ExerciseUseCases,
+    private val exerciseUseCases: ExerciseUseCases,
+    private val exerciseSetUseCases: ExerciseSetUseCases,
     savedStateHandle: SavedStateHandle
-
 ) : ViewModel() {
     private var recentlyDeletedTrainingExercise: TrainingExercise? = null
-    private var getTrainingExercisesJob: Job? = null
 
-    // state of this screen
-    private val _state = mutableStateOf(TrainingExercisesState())
-    val state: State<TrainingExercisesState> = _state
-    private var currentTrainingId: Int? = null
+    // State
+    private val _trainingExercisesWithSets = MutableStateFlow<List<TrainingExerciseWithSets>>(emptyList())
+    val trainingExercisesWithSets = _trainingExercisesWithSets.asStateFlow()
 
+    private var currentTrainingId: String? = null
+
+
+    //get the id from bundle;
+    //if id is nice - set local id value and load TEwSets by that id
     init {
-        savedStateHandle.get<Int>("trainingId")?.let { trainingId ->
+        savedStateHandle.get<String>("trainingId")?.let { trainingId ->
             Log.d("TrainingExercisesVM", "init: trainingId from savedStateHandle: $trainingId")
-            if (trainingId != -1) {
+            if (trainingId.isNotBlank()) {
                 currentTrainingId = trainingId
+                loadTrainingExercisesWithSets(trainingId)
             }
         }
+        Log.e("TrainingExercises VIEWMODEL:", "\n\n\n After initialization we have TEs with SETS: \n ${trainingExercisesWithSets.value}\n\n\n")
     }
 
     fun onEvent(event: TrainingExercisesEvent) {
@@ -62,34 +65,36 @@ class TrainingExercisesViewModel @Inject constructor(
             is TrainingExercisesEvent.AddTrainingExercise -> {
                 viewModelScope.launch {
                     try {
-                        // Add the exercise to the training
-                        // sets are fetched on their own way, here we don't operate on them
+                        Log.e("!!!!!!!!!!!!!!!!!!", "OBTAINED TRAINING ID IS ${event.trainingId}")
                         val trainingExercise = TrainingExercise(
                             trainingId = event.trainingId,
                             exerciseId = event.exercise.id ?: 0
                         )
-
-                        trainingExerciseUseCases.addTrainingExercise(
-                            trainingExercise
-                        )
-
-                        getTrainingExercises(event.trainingId)
-
+                        trainingExerciseUseCases.addTrainingExercise(trainingExercise)
+                        //reload after updating
+                        loadTrainingExercisesWithSets(event.trainingId)
                     } catch (e: InvalidTrainingException) {
-                        // Handle validation errors, e.g., show a snackbar
+                        Log.e("TrainingExercisesVM", "Error adding training exercise: ${e.message}")
                     }
                 }
             }
         }
     }
 
-    //  fetch TEs when needed, state is changed only here
-    fun getTrainingExercises(trainingId: String): Flow<List<TrainingExercise>> {
-        return trainingExerciseUseCases.getExercisesForTraining(trainingId)
-    }
-
-    fun getExercise(exerciseId: Int): Flow<Exercise?> {
-        return exerciseUseCases.getExerciseById(exerciseId)
-            .flowOn(Dispatchers.IO)
+    private fun loadTrainingExercisesWithSets(trainingId: String) {
+        viewModelScope.launch {
+            trainingExerciseUseCases.getExercisesForTraining(trainingId).collect { trainingExercises ->
+                val list = trainingExercises.map { trainingExercise ->
+                    val exercise = exerciseUseCases.getExerciseById(trainingExercise.exerciseId).firstOrNull()
+                    val sets = exerciseSetUseCases.getSetsForTrainingExercise(trainingExercise.id).firstOrNull().orEmpty()
+                    TrainingExerciseWithSets(
+                        trainingExercise = trainingExercise,
+                        exercise = exercise,
+                        sets = sets
+                    )
+                }
+                _trainingExercisesWithSets.value = list
+            }
+        }
     }
 }
