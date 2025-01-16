@@ -8,5 +8,5 @@ Every exercise has a goal. At the trainings screen you can track how close you a
 The value compared with exercise goal is a maximum repetions set you've made on a training.
 
 # What's planned - ToDo: #
-a. - [x] Sets feature - ability to add numerous amount of set per for exercises added to the training
-b. - [ ] Statistics screen
+- [x] Sets feature - ability to add numerous amount of set per for exercises added to the training
+- [ ] Statistics screen
