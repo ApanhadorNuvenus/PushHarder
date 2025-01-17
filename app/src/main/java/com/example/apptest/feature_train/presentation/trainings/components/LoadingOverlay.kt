@@ -73,7 +73,6 @@ fun LoadingOverlay(isVisible: Boolean) {
                     }
                 }
             }
-
         }
     }
 }

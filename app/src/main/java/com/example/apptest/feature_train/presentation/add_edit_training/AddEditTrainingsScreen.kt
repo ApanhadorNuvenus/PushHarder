@@ -1,5 +1,9 @@
 package com.example.apptest.feature_train.presentation.add_edit_training
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,9 +18,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -39,6 +45,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.apptest.feature_train.domain.model.Exercise
 import com.example.apptest.feature_train.domain.model.TrainingExercise
+import com.example.apptest.feature_train.presentation.add_edit_training.components.AddSetDialog
 import com.example.apptest.feature_train.presentation.add_edit_training.components.TransparentHintTextField
 import com.example.apptest.feature_train.presentation.trainingExercises.components.ExtendedTrainingExerciseList
 import kotlinx.coroutines.flow.collectLatest
@@ -70,6 +77,7 @@ fun AddEditTrainingsScreen(
                         message = event.message
                     )
                 }
+
                 is AddEditTrainingsViewModel.UiEvent.SaveTraining -> {
                     navController.navigateUp()
                 }
@@ -82,7 +90,8 @@ fun AddEditTrainingsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.onEvent(AddEditTrainingsEvent.SaveTraining) },
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp) // Add elevation
             ) {
                 Icon(imageVector = Icons.Default.Save, contentDescription = "Save training")
             }
@@ -136,26 +145,47 @@ fun AddEditTrainingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = { showAddExerciseDialog = true }) {
+            // "Add Exercise" Button with Ripple and Elevation
+            Button(
+                onClick = { showAddExerciseDialog = true },
+                modifier = Modifier.fillMaxWidth(),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+            ) {
                 Text("Add Exercise")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            ExtendedTrainingExerciseList(
-                trainingExercisesWithSets = trainingExercisesWithSets,
-                onAddSet = { trainingExercise ->
-                    selectedExerciseForSet = trainingExercise
-                    showAddSetDialog = true
-                },
-                onDeleteSet = { set ->
-                    viewModel.onEvent(AddEditTrainingsEvent.DeleteSetFromExercise(set.trainingExerciseId, set.id))
-                },
-                onDeleteTrainingExercise = { trainingExercise ->
-                    viewModel.onEvent(AddEditTrainingsEvent.DeleteTrainingExercise(trainingExercise.id))
-                },
-                exerciseUseCases = viewModel.exerciseUseCases
-            )
+            // AnimatedVisibility for Exercise List
+            AnimatedVisibility(
+                visible = trainingExercisesWithSets.isNotEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                ExtendedTrainingExerciseList(
+                    trainingExercisesWithSets = trainingExercisesWithSets,
+                    onAddSet = { trainingExercise ->
+                        selectedExerciseForSet = trainingExercise
+                        showAddSetDialog = true
+                    },
+                    onDeleteSet = { set ->
+                        viewModel.onEvent(
+                            AddEditTrainingsEvent.DeleteSetFromExercise(
+                                set.trainingExerciseId,
+                                set.id
+                            )
+                        )
+                    },
+                    onDeleteTrainingExercise = { trainingExercise ->
+                        viewModel.onEvent(
+                            AddEditTrainingsEvent.DeleteTrainingExercise(
+                                trainingExercise.id
+                            )
+                        )
+                    },
+                    exerciseUseCases = viewModel.exerciseUseCases
+                )
+            }
 
             // Dialog for adding a new exercise
             if (showAddExerciseDialog) {
@@ -170,7 +200,11 @@ fun AddEditTrainingsScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            viewModel.onEvent(AddEditTrainingsEvent.AddExercise(exercise))
+                                            viewModel.onEvent(
+                                                AddEditTrainingsEvent.AddExercise(
+                                                    exercise
+                                                )
+                                            )
                                             showAddExerciseDialog = false
                                         }
                                         .padding(8.dp)
@@ -186,48 +220,21 @@ fun AddEditTrainingsScreen(
                 )
             }
 
-            // Dialog for adding a new set
             if (showAddSetDialog && selectedExerciseForSet != null) {
-                var newSetNumber by remember { mutableStateOf(1) }
-                var newSetReps by remember { mutableStateOf(0) }
-
-                AlertDialog(
-                    onDismissRequest = { showAddSetDialog = false },
-                    title = { Text("Add New Set") },
-                    text = {
-                        Column {
-                            OutlinedTextField(
-                                value = newSetNumber.toString(),
-                                onValueChange = { newValue ->
-                                    newSetNumber = newValue.toIntOrNull() ?: 1
-                                },
-                                label = { Text("Set Number") }
-                            )
-                            OutlinedTextField(
-                                value = newSetReps.toString(),
-                                onValueChange = { newValue ->
-                                    newSetReps = newValue.toIntOrNull() ?: 0
-                                },
-                                label = { Text("Reps") }
-                            )
-                        }
+                AddSetDialog(
+                    onDismiss = {
+                        showAddSetDialog = false
+                        selectedExerciseForSet = null
                     },
-                    confirmButton = {
-                        Button(onClick = {
-                            selectedExerciseForSet?.let {
-                                viewModel.onEvent(
-                                    AddEditTrainingsEvent.AddSetToExercise(it.id, newSetNumber, newSetReps)
+                    onConfirm = { newSet ->
+                        selectedExerciseForSet?.let {
+                            viewModel.onEvent(
+                                AddEditTrainingsEvent.AddSetToExercise(
+                                    trainingExerciseId = it.id,
+                                    setNumber = newSet.setNumber,
+                                    reps = newSet.reps ?: 0
                                 )
-                                showAddSetDialog = false
-                                selectedExerciseForSet = null
-                            }
-                        }) {
-                            Text("Add")
-                        }
-                    },
-                    dismissButton = {
-                        Button(onClick = { showAddSetDialog = false; selectedExerciseForSet = null }) {
-                            Text("Cancel")
+                            )
                         }
                     }
                 )

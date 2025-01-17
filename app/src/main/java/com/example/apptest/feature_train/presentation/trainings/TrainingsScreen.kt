@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -50,6 +48,7 @@ import com.example.apptest.feature_train.presentation.trainings.components.CoolT
 import com.example.apptest.feature_train.presentation.util.Screen
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.ScatterPlot
 import com.example.apptest.feature_train.presentation.trainings.components.LoadingOverlay
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -60,164 +59,106 @@ fun TrainingsScreen(
     viewModel: TrainingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state
-    val trainingExercisesWithSets by viewModel.trainingExercisesWithSets.collectAsState()
+    val trainings by viewModel.trainingsState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState() // Collect the isLoading state
     var showDialog by remember { mutableStateOf(false) }
     var trainingToDelete by remember { mutableStateOf<Training?>(null) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Workout Tracker", style = MaterialTheme.typography.headlineMedium)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    NavigationDrawerItem(
-                        label = { Text("Trainings") },
-                        selected = true, // Highlight because this is the Trainings screen
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            // We are already on the Trainings screen, so no navigation needed
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = "Trainings"
-                            )
-                        }
-                    )
-                    NavigationDrawerItem(
-                        label = { Text("Exercises") },
-                        selected = false,
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            navController.navigate(Screen.ExercisesScreen.route)
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Filled.FitnessCenter,
-                                contentDescription = "Exercises"
-                            )
-                        }
-                    )
-                    Spacer(modifier = Modifier.weight(1f)) // Push the version info to the bottom
-                    Text(
-                        text = "Version: ${BuildConfig.VERSION_NAME}", // Display app version
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate(Screen.AddEditTrainingScreen.route)
+                },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add training")
             }
         }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Trainings") },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Open drawer")
-                        }
-                    }
-                )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate(
-                            "add_edit_training_screen"
-                        )
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary
+    ) { padding ->
+        Box(modifier = Modifier.fillMaxSize()) { // Add a Box to contain both content and overlay
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add training")
-                }
-            }
-        ) { padding ->
-            Box(modifier = Modifier.fillMaxSize()) { // Add a Box to contain both content and overlay
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = "Trainings",
-                            style = MaterialTheme.typography.headlineMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Button(onClick = { viewModel.onEvent(TrainingsEvent.ToggleOrderSection) }) {
-                            Text("Order")
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
-
-                    if (state.isOrderSectionVisible) {
-                        OrderSection(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp), // Reduced padding
-                            trainingOrder = state.trainingOrder,
-                            onOrderChange = {
-                                viewModel.onEvent(TrainingsEvent.Order(it))
-                            }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
-
-                    CoolTrainingsList(
-                        trainings = state.trainings,
-                        onDeleteTraining = { training ->
-                            trainingToDelete = training
-                            showDialog = true
-                        },
-                        navController = navController,
-                        exerciseUseCases = viewModel.exerciseUseCases,
+                    Text(
+                        text = "Trainings",
+                        style = MaterialTheme.typography.headlineMedium,
                         modifier = Modifier.weight(1f)
                     )
-
-                    if (showDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showDialog = false },
-                            title = { Text("Confirm Deletion") },
-                            text = { Text("Are you sure you want to delete this training?") },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        trainingToDelete?.let {
-                                            viewModel.onEvent(TrainingsEvent.DeleteTraining(it))
-                                        }
-                                        showDialog = false
-                                        trainingToDelete = null
-                                    }
-                                ) {
-                                    Text("Delete")
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(
-                                    onClick = {
-                                        showDialog = false
-                                        trainingToDelete = null
-                                    }
-                                ) {
-                                    Text("Cancel")
-                                }
-                            }
-                        )
+                    Button(onClick = { viewModel.onEvent(TrainingsEvent.ToggleOrderSection) }) {
+                        Text("Order")
                     }
                 }
 
-                // Conditionally display the LoadingOverlay
-                LoadingOverlay(isVisible = isLoading)
+                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+
+                if (state.isOrderSectionVisible) {
+                    OrderSection(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp), // Reduced padding
+                        trainingOrder = state.trainingOrder,
+                        onOrderChange = {
+                            viewModel.onEvent(TrainingsEvent.Order(it))
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+
+                CoolTrainingsList(
+                    trainings = trainings,
+                    onDeleteTraining = { training ->
+                        trainingToDelete = training
+                        showDialog = true
+                    },
+                    navController = navController,
+                    exerciseUseCases = viewModel.exerciseUseCases,
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        title = { Text("Confirm Deletion") },
+                        text = { Text("Are you sure you want to delete this training?") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    trainingToDelete?.let {
+                                        viewModel.onEvent(TrainingsEvent.DeleteTraining(it))
+                                    }
+                                    showDialog = false
+                                    trainingToDelete = null
+                                }
+                            ) {
+                                Text("Delete")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    showDialog = false
+                                    trainingToDelete = null
+                                }
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
             }
+
+            // Conditionally display the LoadingOverlay
+            LoadingOverlay(isVisible = isLoading)
         }
     }
 }

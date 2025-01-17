@@ -48,6 +48,9 @@ class TrainingsViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _trainingsState = MutableStateFlow<List<Training>>(emptyList())
+    val trainingsState: StateFlow<List<Training>> = _trainingsState.asStateFlow()
+
     init {
         getTrainings(TrainingOrder.Date(OrderType.Descending))
     }
@@ -113,6 +116,7 @@ class TrainingsViewModel @Inject constructor(
                     trainings = trainings,
                     trainingOrder = trainingOrder
                 )
+                _trainingsState.value = trainings
                 trainings.forEach { training ->
                     loadTrainingExercisesWithSets(training.id)
                 }

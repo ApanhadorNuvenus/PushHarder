@@ -85,7 +85,7 @@ class AddEditTrainingsViewModel @Inject constructor(
             }
         }
     }
-    // ... rest of your ViewModel code ...
+
     fun onEvent(event: AddEditTrainingsEvent) {
         when (event) {
             is AddEditTrainingsEvent.EnteredTitle -> {

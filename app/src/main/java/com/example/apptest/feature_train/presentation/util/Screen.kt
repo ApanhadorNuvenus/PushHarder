@@ -6,4 +6,5 @@ sealed class Screen(val route: String) {
     object ExercisesScreen : Screen("exercises_screen")
     object AddEditExerciseScreen : Screen("add_edit_exercise_screen")
     object StatsScreen : Screen("stats_screen")
+    object MainScreen : Screen("main_screen")
 }

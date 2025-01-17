@@ -36,7 +36,7 @@ fun CoolTrainingItem(
     val exercisesForTraining = trainingExercisesWithSets[trainingId] ?: emptyList()
 
     // Format the date
-    val dateFormatter = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     val formattedDate = dateFormatter.format(Date(training.date))
 
     Card(
@@ -62,9 +62,8 @@ fun CoolTrainingItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = training.title,
+                    text = formattedDate,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 IconButton(
@@ -80,12 +79,13 @@ fun CoolTrainingItem(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             // Display the formatted date
             Text(
-                text = formattedDate,
-                style = MaterialTheme.typography.bodySmall,
+                text = "\"${training.title}\"",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 

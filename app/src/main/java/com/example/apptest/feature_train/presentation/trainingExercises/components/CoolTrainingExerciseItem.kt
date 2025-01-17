@@ -62,7 +62,7 @@ fun CoolTrainingExerciseItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 LinearProgressIndicator(
-                    progress = progress.coerceIn(0f, 1f),
+                    progress = { progress.coerceIn(0f, 1f) },
                     modifier = Modifier.weight(1f),
                     color = if (exerciseGoal != null) barColor else desaturatedBarColor,
                 )
@@ -80,6 +80,22 @@ fun CoolTrainingExerciseItem(
                 text = "All: $totalReps",
                 style = MaterialTheme.typography.bodyMedium
             )
+
+            // Display sets (no need)
+//            Column(modifier = Modifier.padding(start = 8.dp)) {
+//                sets.forEach { set ->
+//                    val displayText = if (set.setNumber == 1) {
+//                        "${set.reps}"
+//                    } else {
+//                        "${set.setNumber} × ${set.reps}"
+//                    }
+//                    Text(
+//                        text = displayText,
+//                        style = MaterialTheme.typography.bodyMedium,
+//                        modifier = Modifier.padding(vertical = 2.dp)
+//                    )
+//                }
+//            }
         }
     }
 }

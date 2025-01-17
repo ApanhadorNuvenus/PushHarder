@@ -27,10 +27,8 @@ fun ExtendedTrainingExerciseItem(
     onAddSet: () -> Unit = {},
     onDeleteSet: (ExerciseSet) -> Unit = {},
     onDeleteTrainingExercise: () -> Unit = {},
-//    onDeleteAllSets: () -> Unit = {}
 ) {
     val exercise by exerciseUseCases.getExerciseById(trainingExercise.exerciseId).collectAsState(initial = null)
-
 
     Card(
         modifier = modifier
@@ -57,7 +55,6 @@ fun ExtendedTrainingExerciseItem(
                     )
                 }
 
-
                 Row {
                     IconButton(onClick = onAddSet) {
                         Icon(
@@ -76,37 +73,19 @@ fun ExtendedTrainingExerciseItem(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Sets List
-            sets.forEach { set ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Set ${set.setNumber}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = "${set.setNumber} × ${set.reps}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { onDeleteSet(set) },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete set"
-                        )
-                    }
+            // Sets List (Horizontal Arrangement)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                sets.forEach { set ->
+                    SetItem(
+                        setNumber = set.setNumber ?: 1,
+                        reps = set.reps ?: 0,
+                        onDelete = { onDeleteSet(set) }
+                    )
                 }
             }
         }
