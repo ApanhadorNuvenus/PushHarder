@@ -2,24 +2,32 @@ package com.example.apptest.feature_train.presentation.stats.components
 
 import android.graphics.Paint
 import android.graphics.Typeface
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.example.apptest.feature_train.domain.model.Exercise
 import com.example.apptest.feature_train.domain.model.Training
 import com.example.apptest.feature_train.presentation.trainingExercises.TrainingExerciseWithSets
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -37,9 +45,12 @@ fun StatsPlot(
     trainings: List<Training>,
     selectedExerciseName: String?,
     trainingExercisesWithSets: Map<String, List<TrainingExerciseWithSets>>,
-    onTrainingSelected: (Training?) -> Unit, // Callback for training selection
-    backgroundColor: Color = MaterialTheme.colorScheme.surface // Default value
+    onTrainingSelected: (Training?) -> Unit,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    allExercises: List<Exercise>
 ) {
+    val selectedExerciseGoal = allExercises.firstOrNull { it.name == selectedExerciseName }?.goal?.toFloat() ?: 0f
+
     val chartEntries = remember(trainings, selectedExerciseName, trainingExercisesWithSets) {
         trainings.mapIndexedNotNull { index, training ->
             val totalReps = trainingExercisesWithSets[training.id]
@@ -84,107 +95,134 @@ fun StatsPlot(
         .height(300.dp)
         .clipToBounds()
 
+    // Use remember with a key to create a reference to the LineChart
+    val lineChart = remember(selectedExerciseGoal) { mutableStateOf<LineChart?>(null) }
+
     if (chartEntries.isNotEmpty()) {
-        AndroidView(
-            modifier = chartModifier,
-            factory = { context ->
-                LineChart(context).apply {
-                    val customRenderer = object : LineChartRenderer(this, animator, viewPortHandler) {
-                        override fun drawExtras(c: android.graphics.Canvas?) {
-                            super.drawExtras(c)
-                            drawCirclesAndText(c)
-                        }
+        Box(modifier = chartModifier) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { context ->
+                    LineChart(context).apply {
+                        lineChart.value = this // Store the LineChart instance
 
-                        private fun drawCirclesAndText(c: android.graphics.Canvas?) {
-                            if (c == null) return
-                            val circleRadius = 25f // Radius in pixels
-                            val circlePaint = Paint().apply {
-                                color = primaryColor
-                                style = Paint.Style.FILL
-                            }
-                            val textPaint = Paint().apply {
-                                color = Color.White.toArgb()
-                                textSize = 30f // Text size in pixels
-                                textAlign = Paint.Align.CENTER
-                                typeface = Typeface.DEFAULT_BOLD // Make text bold
-                                isAntiAlias = true
+                        val customRenderer = object : LineChartRenderer(this, animator, viewPortHandler) {
+                            override fun drawExtras(c: android.graphics.Canvas?) {
+                                super.drawExtras(c)
+                                drawCirclesAndText(c)
                             }
 
-                            for (dataSet in mChart.lineData.dataSets) {
-                                if (dataSet is LineDataSet && dataSet.isVisible) {
-                                    for (i in 0 until dataSet.entryCount) {
-                                        val entry = dataSet.getEntryForIndex(i)
-                                        val point = floatArrayOf(entry.x, entry.y)
-                                        mChart.getTransformer(dataSet.axisDependency).pointValuesToPixel(point)
+                            private fun drawCirclesAndText(c: android.graphics.Canvas?) {
+                                if (c == null) return
+                                val circleRadius = 25f // Radius in pixels
+                                val circlePaint = Paint().apply {
+                                    color = primaryColor
+                                    style = Paint.Style.FILL
+                                }
+                                val textPaint = Paint().apply {
+                                    color = Color.White.toArgb()
+                                    textSize = 30f // Text size in pixels
+                                    textAlign = Paint.Align.CENTER
+                                    typeface = Typeface.DEFAULT_BOLD // Make text bold
+                                    isAntiAlias = true
+                                }
 
-                                        // Calculate text bounds
-                                        val repsText = entry.y.roundToInt().toString()
-                                        val textWidth = textPaint.measureText(repsText)
-                                        val textBounds = android.graphics.Rect()
-                                        textPaint.getTextBounds(repsText, 0, repsText.length, textBounds)
+                                for (dataSet in mChart.lineData.dataSets) {
+                                    if (dataSet is LineDataSet && dataSet.isVisible) {
+                                        for (i in 0 until dataSet.entryCount) {
+                                            val entry = dataSet.getEntryForIndex(i)
+                                            val point = floatArrayOf(entry.x, entry.y)
+                                            mChart.getTransformer(dataSet.axisDependency).pointValuesToPixel(point)
 
-                                        // Adjust text position to center
-                                        val textX = point[0]
-                                        val textY = point[1] + textBounds.height() / 2f
+                                            // Calculate text bounds
+                                            val repsText = entry.y.roundToInt().toString()
+                                            val textWidth = textPaint.measureText(repsText)
+                                            val textBounds = android.graphics.Rect()
+                                            textPaint.getTextBounds(repsText, 0, repsText.length, textBounds)
 
-                                        // Draw circle and text
-                                        c.drawCircle(point[0], point[1], circleRadius, circlePaint)
-                                        c.drawText(repsText, textX, textY, textPaint)
+                                            // Adjust text position to center
+                                            val textX = point[0]
+                                            val textY = point[1] + textBounds.height() / 2f
+
+                                            // Draw circle and text
+                                            c.drawCircle(point[0], point[1], circleRadius, circlePaint)
+                                            c.drawText(repsText, textX, textY, textPaint)
+                                        }
                                     }
                                 }
                             }
                         }
+
+                        renderer = customRenderer
+
+                        // Chart configuration
+                        data = lineData
+                        description.isEnabled = false
+                        xAxis.valueFormatter = IndexAxisValueFormatter(xAxisLabels)
+                        xAxis.position = XAxis.XAxisPosition.BOTTOM
+                        xAxis.setDrawGridLines(false)
+                        xAxis.granularity = 1f // Ensure at least one label is shown
+                        xAxis.setLabelCount(xAxisLabels.size, false) // Force all labels to be shown
+
+                        axisLeft.setDrawGridLines(false)
+                        axisRight.isEnabled = false
+                        legend.isEnabled = false
+                        setTouchEnabled(true)
+                        setPinchZoom(true)
+                        isDragEnabled = true
+                        setScaleEnabled(true)
+
+                        // Set the value selected listener
+                        setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+                            override fun onValueSelected(e: Entry?, h: Highlight?) {
+                                val training = e?.data as? Training
+                                training?.let { onTrainingSelected(it) }
+                            }
+
+                            override fun onNothingSelected() {
+                                onTrainingSelected(null) // Or handle deselection as needed
+                            }
+                        })
+                        setBackgroundColor(backgroundColor.toArgb())
+                    }
+                },
+                update = { chart ->
+                    // Adjust X-Axis label positions after the chart has rendered
+                    chart.xAxis.valueFormatter = object : IndexAxisValueFormatter(xAxisLabels) {
+                        override fun getFormattedValue(value: Float): String {
+                            // Find the closest actual x-value (entry position)
+                            val closestIndex = xAxisLabelPositions.minByOrNull { kotlin.math.abs(it - value) } ?: value
+                            val index = chartEntries.indexOfFirst { it.x == closestIndex }.takeIf { it >= 0 } ?: return ""
+                            return xAxisLabels.getOrNull(index) ?: ""
+                        }
                     }
 
-                    renderer = customRenderer
-
-                    // Chart configuration
-                    data = lineData
-                    description.isEnabled = false
-                    xAxis.valueFormatter = IndexAxisValueFormatter(xAxisLabels)
-                    xAxis.position = XAxis.XAxisPosition.BOTTOM
-                    xAxis.setDrawGridLines(false)
-                    xAxis.granularity = 1f // Ensure at least one label is shown
-                    xAxis.setLabelCount(xAxisLabels.size, false) // Force all labels to be shown
-
-                    axisLeft.setDrawGridLines(false)
-                    axisRight.isEnabled = false
-                    legend.isEnabled = false
-                    setTouchEnabled(true)
-                    setPinchZoom(true)
-                    isDragEnabled = true
-                    setScaleEnabled(true)
-
-                    // Set the value selected listener
-                    setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
-                        override fun onValueSelected(e: Entry?, h: Highlight?) {
-                            val training = e?.data as? Training
-                            training?.let { onTrainingSelected(it) }
-                        }
-
-                        override fun onNothingSelected() {
-                            onTrainingSelected(null) // Or handle deselection as needed
-                        }
-                    })
-                    setBackgroundColor(backgroundColor.toArgb())
+                    chart.data = lineData
+                    chart.notifyDataSetChanged()
+                    chart.invalidate()
                 }
-            },
-            update = { lineChart ->
-                // Adjust X-Axis label positions after the chart has rendered
-                lineChart.xAxis.valueFormatter = object : IndexAxisValueFormatter(xAxisLabels) {
-                    override fun getFormattedValue(value: Float): String {
-                        // Find the closest actual x-value (entry position)
-                        val closestIndex = xAxisLabelPositions.minByOrNull { kotlin.math.abs(it - value) } ?: value
-                        val index = chartEntries.indexOfFirst { it.x == closestIndex }.takeIf { it >= 0 } ?: return ""
-                        return xAxisLabels.getOrNull(index) ?: ""
+            )
+
+            // Goal line (draw only if chart is initialized and goal is set)
+            if (selectedExerciseGoal > 0) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    lineChart.value?.let { chart ->
+                        val yAxis = chart.axisLeft
+                        val goalLineY =
+                            size.height - (selectedExerciseGoal - yAxis.axisMinimum) / (yAxis.axisMaximum - yAxis.axisMinimum) * size.height
+
+                        if (!goalLineY.isNaN() && !goalLineY.isInfinite()) {
+                            drawLine(
+                                color = Color.Red,
+                                start = Offset(0f, goalLineY),
+                                end = Offset(size.width, goalLineY),
+                                strokeWidth = 5f
+                            )
+                        }
                     }
                 }
-
-                lineChart.data = lineData
-                lineChart.notifyDataSetChanged()
-                lineChart.invalidate()
             }
-        )
+        }
     } else {
         Box(modifier = chartModifier, contentAlignment = Alignment.Center) {
             Text("No data available for plotting.")

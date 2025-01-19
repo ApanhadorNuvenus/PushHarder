@@ -1,5 +1,6 @@
 package com.example.apptest.feature_train.presentation.exercises
 
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -13,6 +14,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,6 +29,12 @@ class ExercisesViewModel @Inject constructor(
 
     private var recentlyDeletedExercise: Exercise? = null
     private var getExercisesJob: Job? = null
+
+    private val _pendingDeletionExercises = MutableStateFlow<List<Exercise>>(emptyList())
+    val pendingDeletionExercises: StateFlow<List<Exercise>> = _pendingDeletionExercises
+
+    private val _exerciseUpdateEvent = MutableSharedFlow<Unit>()
+    val exerciseUpdateEvent = _exerciseUpdateEvent.asSharedFlow()
 
     init {
         getExercises(ExerciseOrder.Name(OrderType.Descending))
@@ -42,14 +53,16 @@ class ExercisesViewModel @Inject constructor(
 
             is ExercisesEvent.DeleteExercise -> {
                 viewModelScope.launch {
-                    exerciseUseCases.deleteExercise(event.exercise)
-                    recentlyDeletedExercise = event.exercise
+                    // Instead of deleting immediately, add to pending list
+                    _pendingDeletionExercises.value = _pendingDeletionExercises.value + event.exercise
                 }
             }
 
             is ExercisesEvent.RestoreExercise -> {
                 viewModelScope.launch {
-                    exerciseUseCases.addExercise(recentlyDeletedExercise ?: return@launch)
+                    _pendingDeletionExercises.value.find { it.id == recentlyDeletedExercise?.id }?.let { exercise ->
+                        _pendingDeletionExercises.value = _pendingDeletionExercises.value - exercise
+                    }
                     recentlyDeletedExercise = null
                 }
             }
@@ -59,6 +72,25 @@ class ExercisesViewModel @Inject constructor(
                     isOrderSectionVisible = !state.value.isOrderSectionVisible
                 )
             }
+        }
+    }
+
+    fun confirmDeletion() {
+        viewModelScope.launch {
+            _pendingDeletionExercises.value.forEach { exercise ->
+                exerciseUseCases.deleteExercise(exercise)
+            }
+            _pendingDeletionExercises.value = emptyList()
+        }
+    }
+
+    fun handlePendingDeletions() {
+        viewModelScope.launch {
+            _pendingDeletionExercises.value.forEach { exercise ->
+                exerciseUseCases.deleteExercise(exercise)
+                Log.d("ExerciseDelete", "delete on screen exit")
+            }
+            _pendingDeletionExercises.value = emptyList()
         }
     }
 
@@ -72,5 +104,11 @@ class ExercisesViewModel @Inject constructor(
                 )
             }
             .launchIn(viewModelScope)
+    }
+
+    fun emitExerciseUpdated() {
+        viewModelScope.launch {
+            _exerciseUpdateEvent.emit(Unit)
+        }
     }
 }

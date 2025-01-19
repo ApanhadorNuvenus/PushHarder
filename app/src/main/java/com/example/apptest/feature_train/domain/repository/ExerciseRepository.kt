@@ -12,4 +12,6 @@ interface ExerciseRepository {
     suspend fun addExercise(exercise: Exercise)
 
     suspend fun deleteExercise(exercise: Exercise)
+
+    suspend fun updateExercise(exercise: Exercise)
 }

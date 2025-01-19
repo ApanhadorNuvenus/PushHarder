@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,6 +35,9 @@ class StatsViewModel @Inject constructor(
     val state: StateFlow<StatsState> = _state
 
     private val _trainingExercisesWithSets = MutableStateFlow<Map<String, List<TrainingExerciseWithSets>>>(emptyMap())
+
+    private val _selectedTrainingId = MutableStateFlow<String?>(null)
+    val selectedTrainingId: StateFlow<String?> = _selectedTrainingId
 
     init {
         loadAllExercises()
@@ -62,6 +68,9 @@ class StatsViewModel @Inject constructor(
                     _state.update { it.copy(filteredTrainings = trainings) }
                     trainings.forEach { training ->
                         loadTrainingExercisesWithSets(training.id)
+                    }
+                    if (trainings.isNotEmpty() && _state.value.selectedExerciseName == null) {
+                        selectFirstExerciseFromTrainings(trainings)
                     }
                 }
                 .launchIn(viewModelScope)
@@ -94,7 +103,28 @@ class StatsViewModel @Inject constructor(
             val filteredTrainings = allTrainings.filter { training ->
                 _trainingExercisesWithSets.value[training.id]?.any { it.exercise?.name == exerciseName } ?: false
             }
-            _state.update { it.copy(filteredTrainings = filteredTrainings, trainingExercisesWithSets = _trainingExercisesWithSets.value) }
+
+            _state.update {
+                it.copy(
+                    filteredTrainings = filteredTrainings,
+                    trainingExercisesWithSets = _trainingExercisesWithSets.value
+                )
+            }
+
+            // Automatically select the latest training with the selected exercise
+            val latestTrainingWithExercise = filteredTrainings.maxByOrNull { it.date }
+            _selectedTrainingId.value = latestTrainingWithExercise?.id
         }
+    }
+
+    fun updateSelectedTraining(trainingId: String) {
+        _selectedTrainingId.value = trainingId
+    }
+
+    private fun selectFirstExerciseFromTrainings(trainings: List<Training>) {
+        val firstExerciseName = trainings.firstNotNullOfOrNull { training ->
+            _trainingExercisesWithSets.value[training.id]?.firstOrNull()?.exercise?.name
+        }
+        firstExerciseName?.let { onEvent(StatsEvent.SelectExercise(it)) }
     }
 }

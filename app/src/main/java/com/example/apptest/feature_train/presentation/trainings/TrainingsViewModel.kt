@@ -27,6 +27,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.example.apptest.feature_train.presentation.util.Event
+import com.example.apptest.feature_train.presentation.util.EventBus
+import kotlinx.coroutines.flow.collect
 
 @HiltViewModel
 class TrainingsViewModel @Inject constructor(
@@ -62,6 +65,17 @@ class TrainingsViewModel @Inject constructor(
         if (!dataLoaded) {
             getTrainings(TrainingOrder.Date(OrderType.Descending))
             dataLoaded = true
+        }
+        observeExerciseUpdates()
+    }
+
+    private fun observeExerciseUpdates() {
+        viewModelScope.launch {
+            EventBus.events.collect { event ->
+                if (event is Event.ExerciseUpdated) {
+                    refreshTrainings()
+                }
+            }
         }
     }
 
@@ -115,6 +129,9 @@ class TrainingsViewModel @Inject constructor(
             }
             _pendingDeletionTrainings.value = emptyList()
         }
+    }
+    fun refreshTrainings() {
+        getTrainings(state.value.trainingOrder)
     }
     private fun getTrainings(trainingOrder: TrainingOrder) {
         Log.d("TrainingsViewModel", "getTrainings called")

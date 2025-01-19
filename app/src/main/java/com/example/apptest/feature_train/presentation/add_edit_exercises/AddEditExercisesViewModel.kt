@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.apptest.feature_train.domain.model.Exercise
 import com.example.apptest.feature_train.domain.model.InvalidExerciseException
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.ExerciseUseCases
+import com.example.apptest.feature_train.presentation.add_edit_exercises.AddEditCurrentExerciseState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -15,6 +16,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import com.example.apptest.feature_train.presentation.util.Event
+import com.example.apptest.feature_train.presentation.util.EventBus
 
 @HiltViewModel
 class AddEditExercisesViewModel @Inject constructor(
@@ -28,6 +31,8 @@ class AddEditExercisesViewModel @Inject constructor(
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
 
+    private var currentExerciseId: Int? = null
+
     init {
         savedStateHandle.get<Int>("exerciseId")?.let { exerciseId ->
             if (exerciseId != -1) {
@@ -36,11 +41,11 @@ class AddEditExercisesViewModel @Inject constructor(
                         .filterNotNull()
                         .first()
                         .let { exercise ->
+                            currentExerciseId = exercise.id
                             _exerciseState.value = exerciseState.value.copy(
                                 title = exercise.name,
                                 goal = exercise.goal,
                                 description = exercise.description ?: "",
-                                exerciseId = exercise.id,
                                 isTitleHintVisible = false,
                                 isDescriptionHintVisible = exercise.description.isNullOrBlank(),
                                 isGoalHintVisible = exercise.goal == null
@@ -98,14 +103,21 @@ class AddEditExercisesViewModel @Inject constructor(
             is AddEditExercisesEvent.SaveExercise -> {
                 viewModelScope.launch {
                     try {
-                        exerciseUseCases.addExercise(
-                            Exercise(
-                                name = exerciseState.value.title,
-                                description = exerciseState.value.description,
-                                goal = exerciseState.value.goal,
-                                id = exerciseState.value.exerciseId
-                            )
+                        val exercise = Exercise(
+                            name = exerciseState.value.title,
+                            description = exerciseState.value.description,
+                            goal = exerciseState.value.goal,
+                            id = currentExerciseId
                         )
+
+                        if (currentExerciseId != null) {
+                            // Update existing exercise
+                            exerciseUseCases.updateExercise(exercise)
+                        } else {
+                            // Insert new exercise
+                            exerciseUseCases.addExercise(exercise)
+                        }
+                        EventBus.emitEvent(Event.ExerciseUpdated)
                         _eventFlow.emit(UiEvent.SaveExercise)
                     } catch (e: InvalidExerciseException) {
                         _eventFlow.emit(

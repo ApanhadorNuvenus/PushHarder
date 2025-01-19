@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.example.apptest.feature_train.domain.model.Exercise
 import kotlinx.coroutines.flow.Flow
 
@@ -21,4 +22,7 @@ interface ExerciseDao {
 
     @Delete
     suspend fun deleteExercise(exercise: Exercise)
+
+    @Update
+    suspend fun updateExercise(exercise: Exercise)
 }

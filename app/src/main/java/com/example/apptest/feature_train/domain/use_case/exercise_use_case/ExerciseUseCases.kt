@@ -4,5 +4,6 @@ data class ExerciseUseCases(
     val getAllExercises: GetExercises,
     val deleteExercise: DeleteExercise,
     val addExercise: AddExercise,
-    val getExerciseById: GetExerciseById
+    val getExerciseById: GetExerciseById,
+    val updateExercise: UpdateExercise
 )

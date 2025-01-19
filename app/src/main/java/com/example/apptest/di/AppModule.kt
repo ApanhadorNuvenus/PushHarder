@@ -20,6 +20,7 @@ import com.example.apptest.feature_train.domain.use_case.exercise_use_case.Delet
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.ExerciseUseCases
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.GetExercises
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.GetExerciseById
+import com.example.apptest.feature_train.domain.use_case.exercise_use_case.UpdateExercise
 import com.example.apptest.feature_train.domain.use_case.training_use_case.AddTraining
 import com.example.apptest.feature_train.domain.use_case.training_use_case.DeleteTraining
 import com.example.apptest.feature_train.domain.use_case.training_use_case.GetAllTrainings
@@ -83,7 +84,8 @@ object AppModule {
             addExercise = AddExercise(repository),
             deleteExercise = DeleteExercise(repository),
             getAllExercises = GetExercises(repository),
-            getExerciseById = GetExerciseById(repository)
+            getExerciseById = GetExerciseById(repository),
+            updateExercise = UpdateExercise(repository)
         )
     }
 

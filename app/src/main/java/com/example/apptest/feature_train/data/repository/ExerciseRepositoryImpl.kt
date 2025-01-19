@@ -27,4 +27,8 @@ class ExerciseRepositoryImpl(
     override suspend fun deleteExercise(exercise: Exercise) {
         dao.deleteExercise(exercise)
     }
+
+    override suspend fun updateExercise(exercise: Exercise) {
+        dao.updateExercise(exercise)
+    }
 }
