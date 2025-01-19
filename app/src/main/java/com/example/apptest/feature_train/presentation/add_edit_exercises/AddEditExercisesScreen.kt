@@ -1,20 +1,16 @@
-package com.example.apptest.feature_train.presentation.add_edit_exercise
+package com.example.apptest.feature_train.presentation.add_edit_exercises
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.apptest.feature_train.domain.model.ExerciseType
 import com.example.apptest.feature_train.presentation.add_edit_training.components.TransparentHintTextField
 import kotlinx.coroutines.flow.collectLatest
 

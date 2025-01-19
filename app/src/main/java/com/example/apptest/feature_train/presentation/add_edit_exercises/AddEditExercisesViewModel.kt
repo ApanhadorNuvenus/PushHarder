@@ -1,4 +1,4 @@
-package com.example.apptest.feature_train.presentation.add_edit_exercise
+package com.example.apptest.feature_train.presentation.add_edit_exercises
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf

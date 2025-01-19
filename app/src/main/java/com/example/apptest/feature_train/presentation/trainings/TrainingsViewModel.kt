@@ -1,5 +1,6 @@
 package com.example.apptest.feature_train.presentation.trainings
 
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -51,8 +52,17 @@ class TrainingsViewModel @Inject constructor(
     private val _trainingsState = MutableStateFlow<List<Training>>(emptyList())
     val trainingsState: StateFlow<List<Training>> = _trainingsState.asStateFlow()
 
+    private var dataLoaded = false
+
+    private val _pendingDeletionTrainings = MutableStateFlow<List<Training>>(emptyList())
+    val pendingDeletionTrainings: StateFlow<List<Training>> = _pendingDeletionTrainings.asStateFlow()
+
     init {
-        getTrainings(TrainingOrder.Date(OrderType.Descending))
+        Log.d("TrainingsViewModel", "ViewModel init block called")
+        if (!dataLoaded) {
+            getTrainings(TrainingOrder.Date(OrderType.Descending))
+            dataLoaded = true
+        }
     }
 
     fun onEvent(event: TrainingsEvent) {
@@ -65,37 +75,24 @@ class TrainingsViewModel @Inject constructor(
                 }
                 getTrainings(event.trainingOrder)
             }
-
             is TrainingsEvent.DeleteTraining -> {
                 trainingToDelete = event.training
-                // Update UI immediately
-                _state.value = state.value.copy(
-                    trainings = state.value.trainings.filter { it.id != event.training.id }
-                )
-                // Schedule actual deletion
                 viewModelScope.launch {
-                    deleteTrainingJob?.cancel()
-                    deleteTrainingJob = launch {
-                        delay(4000L)
-                        trainingToDelete?.let { training ->
-                            trainingUseCases.deleteTraining(training)
-                            trainingToDelete = null
-                        }
-                    }
+                    // Immediately update the UI
+                    _trainingsState.value = _trainingsState.value.filter { it.id != event.training.id }
+                    _pendingDeletionTrainings.value = _pendingDeletionTrainings.value + event.training
+                    // Do not delete from DB here, just store it for potential deletion later
                 }
             }
-
             is TrainingsEvent.RestoreTraining -> {
                 deleteTrainingJob?.cancel()
-                trainingToDelete?.let { training ->
+                _pendingDeletionTrainings.value.find { it.id == trainingToDelete?.id }?.let { training ->
                     // Restore UI immediately
-                    _state.value = state.value.copy(
-                        trainings = state.value.trainings + training
-                    )
+                    _trainingsState.value = _trainingsState.value + training
+                    _pendingDeletionTrainings.value = _pendingDeletionTrainings.value - training
                     trainingToDelete = null
                 }
             }
-
             is TrainingsEvent.ToggleOrderSection -> {
                 _state.value = state.value.copy(
                     isOrderSectionVisible = !state.value.isOrderSectionVisible
@@ -104,12 +101,28 @@ class TrainingsViewModel @Inject constructor(
         }
     }
 
+    fun confirmDeletion(training: Training) {
+        viewModelScope.launch {
+            trainingUseCases.deleteTraining(training)
+            _pendingDeletionTrainings.value = _pendingDeletionTrainings.value - training
+        }
+    }
+
+    fun handlePendingDeletions() {
+        viewModelScope.launch {
+            _pendingDeletionTrainings.value.forEach { training ->
+                trainingUseCases.deleteTraining(training)
+            }
+            _pendingDeletionTrainings.value = emptyList()
+        }
+    }
     private fun getTrainings(trainingOrder: TrainingOrder) {
+        Log.d("TrainingsViewModel", "getTrainings called")
         getTrainingsJob?.cancel()
         getTrainingsJob = trainingUseCases.getAllTrainings(trainingOrder)
             .onStart {
                 _isLoading.value = true
-                delay(500) // Minimum delay of 500 milliseconds
+                delay(500)
             }
             .onEach { trainings ->
                 _state.value = state.value.copy(
@@ -123,7 +136,7 @@ class TrainingsViewModel @Inject constructor(
             }
             .onCompletion {
                 viewModelScope.launch {
-                    delay(550L) // Minimum delay of 300 ms
+                    delay(550L)
                     _isLoading.value = false
                 }
             }
@@ -144,7 +157,6 @@ class TrainingsViewModel @Inject constructor(
                         sets = sets
                     )
                 }
-                // Update the map with the new list of exercises for the specific training
                 val updatedMap = _trainingExercisesWithSets.value.toMutableMap()
                 updatedMap[trainingId] = list
                 _trainingExercisesWithSets.value = updatedMap
@@ -152,9 +164,4 @@ class TrainingsViewModel @Inject constructor(
             }
         }
     }
-
-    fun getTrainingExercisesWithSets(trainingId: String): List<TrainingExerciseWithSets> {
-        return _trainingExercisesWithSets.value[trainingId] ?: emptyList()
-    }
-
 }

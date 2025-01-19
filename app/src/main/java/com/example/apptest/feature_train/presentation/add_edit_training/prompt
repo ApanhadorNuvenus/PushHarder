@@ -2284,7 +2284,7 @@ sealed class Screen (
  import androidx.navigation.compose.composable
  import androidx.navigation.compose.rememberNavController
  import androidx.navigation.navArgument
- import com.example.apptest.feature_train.presentation.add_edit_exercise.AddEditExercisesScreen
+ import com.example.apptest.feature_train.presentation.add_edit_exercises.AddEditExercisesScreen
  import com.example.apptest.feature_train.presentation.add_edit_training.AddEditTrainingsScreen
  import com.example.apptest.feature_train.presentation.exercises.ExercisesScreen
  import com.example.apptest.feature_train.presentation.trainingExercises.TrainingExercisesScreen

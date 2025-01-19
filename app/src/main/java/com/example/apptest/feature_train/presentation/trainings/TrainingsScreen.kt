@@ -1,6 +1,7 @@
 package com.example.apptest.feature_train.presentation.trainings
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,11 +25,16 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +56,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.ScatterPlot
 import com.example.apptest.feature_train.presentation.trainings.components.LoadingOverlay
+import kotlinx.coroutines.delay
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,13 +67,42 @@ fun TrainingsScreen(
 ) {
     val state by viewModel.state
     val trainings by viewModel.trainingsState.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState() // Collect the isLoading state
+    val pendingDeletionTrainings by viewModel.pendingDeletionTrainings.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     var showDialog by remember { mutableStateOf(false) }
     var trainingToDelete by remember { mutableStateOf<Training?>(null) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
+    // Handle pending deletions when navigating away
+    LaunchedEffect(navController) {
+        navController.currentBackStackEntryFlow.collect {
+            viewModel.handlePendingDeletions()
+        }
+    }
+
+    LaunchedEffect(pendingDeletionTrainings) {
+        if (pendingDeletionTrainings.isNotEmpty()) {
+            val training = pendingDeletionTrainings.last()
+            val result = snackbarHostState.showSnackbar(
+                message = "Training ${training.title} deleted",
+                actionLabel = "Undo",
+                duration = SnackbarDuration.Long
+            )
+            when (result) {
+                SnackbarResult.ActionPerformed -> {
+                    viewModel.onEvent(TrainingsEvent.RestoreTraining)
+                }
+                SnackbarResult.Dismissed -> {
+                    trainingToDelete?.let { viewModel.confirmDeletion(it) }
+                }
+            }
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -78,7 +114,7 @@ fun TrainingsScreen(
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) { // Add a Box to contain both content and overlay
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -98,13 +134,13 @@ fun TrainingsScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+                Spacer(modifier = Modifier.height(8.dp))
 
                 if (state.isOrderSectionVisible) {
                     OrderSection(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp), // Reduced padding
+                            .padding(vertical = 8.dp),
                         trainingOrder = state.trainingOrder,
                         onOrderChange = {
                             viewModel.onEvent(TrainingsEvent.Order(it))
@@ -112,52 +148,19 @@ fun TrainingsScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+                Spacer(modifier = Modifier.height(8.dp))
 
                 CoolTrainingsList(
                     trainings = trainings,
                     onDeleteTraining = { training ->
-                        trainingToDelete = training
-                        showDialog = true
+                        viewModel.onEvent(TrainingsEvent.DeleteTraining(training))
                     },
                     navController = navController,
                     exerciseUseCases = viewModel.exerciseUseCases,
                     modifier = Modifier.weight(1f)
                 )
-
-                if (showDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showDialog = false },
-                        title = { Text("Confirm Deletion") },
-                        text = { Text("Are you sure you want to delete this training?") },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    trainingToDelete?.let {
-                                        viewModel.onEvent(TrainingsEvent.DeleteTraining(it))
-                                    }
-                                    showDialog = false
-                                    trainingToDelete = null
-                                }
-                            ) {
-                                Text("Delete")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    showDialog = false
-                                    trainingToDelete = null
-                                }
-                            ) {
-                                Text("Cancel")
-                            }
-                        }
-                    )
-                }
             }
 
-            // Conditionally display the LoadingOverlay
             LoadingOverlay(isVisible = isLoading)
         }
     }

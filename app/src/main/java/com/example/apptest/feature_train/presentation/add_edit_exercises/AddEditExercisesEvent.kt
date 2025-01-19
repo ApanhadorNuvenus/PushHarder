@@ -1,7 +1,6 @@
-package com.example.apptest.feature_train.presentation.add_edit_exercise
+package com.example.apptest.feature_train.presentation.add_edit_exercises
 
 import androidx.compose.ui.focus.FocusState
-import com.example.apptest.feature_train.domain.model.ExerciseType
 
 sealed class AddEditExercisesEvent {
     data class EnteredTitle(val value: String) : AddEditExercisesEvent()

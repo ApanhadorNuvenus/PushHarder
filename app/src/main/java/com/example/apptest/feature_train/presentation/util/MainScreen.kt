@@ -21,22 +21,24 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.example.apptest.BuildConfig
-import com.example.apptest.feature_train.presentation.add_edit_exercise.AddEditExercisesScreen
+import com.example.apptest.feature_train.presentation.add_edit_exercises.AddEditExercisesScreen
 import com.example.apptest.feature_train.presentation.add_edit_training.AddEditTrainingsScreen
 import com.example.apptest.feature_train.presentation.exercises.ExercisesScreen
 import com.example.apptest.feature_train.presentation.stats.StatsScreen
 import com.example.apptest.feature_train.presentation.trainings.TrainingsScreen
-import com.example.apptest.feature_train.presentation.util.Screen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +46,13 @@ import kotlinx.coroutines.launch
 fun MainScreen(navController: NavHostController) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val currentBackStackEntry = navController.currentBackStackEntryAsState()
+    val currentRoute = remember { mutableStateOf(Screen.TrainingsScreen.route) }
+
+    // Update currentRoute whenever the back stack changes
+    currentBackStackEntry.value?.let { entry ->
+        currentRoute.value = entry.destination.route ?: Screen.TrainingsScreen.route
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -54,11 +63,15 @@ fun MainScreen(navController: NavHostController) {
                     Spacer(modifier = Modifier.height(16.dp))
                     NavigationDrawerItem(
                         label = { Text("Trainings") },
-                        selected = navController.currentDestination?.route == Screen.TrainingsScreen.route,
+                        selected = currentRoute.value == Screen.TrainingsScreen.route,
                         onClick = {
                             scope.launch { drawerState.close() }
                             navController.navigate(Screen.TrainingsScreen.route) {
-                                popUpTo(0)
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         },
                         icon = {
@@ -70,11 +83,15 @@ fun MainScreen(navController: NavHostController) {
                     )
                     NavigationDrawerItem(
                         label = { Text("Exercises") },
-                        selected = navController.currentDestination?.route == Screen.ExercisesScreen.route,
+                        selected = currentRoute.value == Screen.ExercisesScreen.route,
                         onClick = {
                             scope.launch { drawerState.close() }
                             navController.navigate(Screen.ExercisesScreen.route){
-                                popUpTo(0)
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         },
                         icon = {
@@ -86,11 +103,15 @@ fun MainScreen(navController: NavHostController) {
                     )
                     NavigationDrawerItem(
                         label = { Text("Statistics") },
-                        selected = navController.currentDestination?.route == Screen.StatsScreen.route,
+                        selected = currentRoute.value == Screen.StatsScreen.route,
                         onClick = {
                             scope.launch { drawerState.close() }
                             navController.navigate(Screen.StatsScreen.route){
-                                popUpTo(0)
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         },
                         icon = {
@@ -114,12 +135,11 @@ fun MainScreen(navController: NavHostController) {
             topBar = {
                 TopAppBar(
                     title = {
-                        val currentRoute = navController.currentDestination?.route
-                        val title = when (currentRoute) {
+                        val title = when (currentRoute.value) {
                             Screen.TrainingsScreen.route -> "Trainings"
                             Screen.ExercisesScreen.route -> "Exercises"
                             Screen.StatsScreen.route -> "Statistics"
-                            else -> "<is that even a screen>?"
+                            else -> "Trainings"
                         }
                         Text(title)
                     },
