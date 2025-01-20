@@ -60,56 +60,79 @@ fun AddEditExercisesScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Title
-            TransparentHintTextField(
-                text = titleState.title,
-                hint = "Enter title...",
-                isHintVisible = titleState.isTitleHintVisible,
-                onValueChange = {
-                    viewModel.onEvent(AddEditExercisesEvent.EnteredTitle(it))
-                },
-                onFocusChange = {
-                    viewModel.onEvent(AddEditExercisesEvent.ChangeTitleFocus(it))
-                },
-                textStyle = MaterialTheme.typography.headlineSmall,
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
 
-            // Description
-            TransparentHintTextField(
-                text = descriptionState.description,
-                hint = "Enter description...",
-                isHintVisible = descriptionState.isDescriptionHintVisible,
-                onValueChange = {
-                    viewModel.onEvent(AddEditExercisesEvent.EnteredDescription(it))
-                },
-                onFocusChange = {
-                    viewModel.onEvent(AddEditExercisesEvent.ChangeDescriptionFocus(it))
-                },
-                textStyle = MaterialTheme.typography.bodyMedium,
-                singleLine = false,
-                modifier = Modifier.height(120.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+                ) {
+                    // Title
+                    TransparentHintTextField(
+                        text = titleState.title,
+                        hint = "Enter title...",
+                        isHintVisible = titleState.isTitleHintVisible,
+                        onValueChange = {
+                            viewModel.onEvent(AddEditExercisesEvent.EnteredTitle(it))
+                        },
+                        onFocusChange = {
+                            viewModel.onEvent(AddEditExercisesEvent.ChangeTitleFocus(it))
+                        },
+                        textStyle = MaterialTheme.typography.headlineSmall,
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-            // Goal
-            TransparentHintTextField(
-                text = goalState.goal?.toString() ?: "",
-                hint = "Enter goal...",
-                isHintVisible = goalState.isGoalHintVisible,
-                onValueChange = {
-                    viewModel.onEvent(AddEditExercisesEvent.EnteredGoal(it))
-                },
-                onFocusChange = {
-                    viewModel.onEvent(AddEditExercisesEvent.ChangeGoalFocus(it))
-                },
-                textStyle = MaterialTheme.typography.bodyMedium,
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Description
+                    TransparentHintTextField(
+                        text = descriptionState.description,
+                        hint = "Enter description...",
+                        isHintVisible = descriptionState.isDescriptionHintVisible,
+                        onValueChange = {
+                            viewModel.onEvent(AddEditExercisesEvent.EnteredDescription(it))
+                        },
+                        onFocusChange = {
+                            viewModel.onEvent(AddEditExercisesEvent.ChangeDescriptionFocus(it))
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        singleLine = false,
+                        modifier = Modifier
+                            .height(120.dp)
+                            .fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Goal
+                    TransparentHintTextField(
+                        text = goalState.goal?.toString() ?: "",
+                        hint = "Enter goal...",
+                        isHintVisible = goalState.isGoalHintVisible,
+                        onValueChange = {
+                            viewModel.onEvent(AddEditExercisesEvent.EnteredGoal(it))
+                        },
+                        onFocusChange = {
+                            viewModel.onEvent(AddEditExercisesEvent.ChangeGoalFocus(it))
+                        },
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
     }
 }

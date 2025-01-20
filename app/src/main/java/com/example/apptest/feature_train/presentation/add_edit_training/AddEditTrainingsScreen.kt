@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,8 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -91,7 +94,7 @@ fun AddEditTrainingsScreen(
             FloatingActionButton(
                 onClick = { viewModel.onEvent(AddEditTrainingsEvent.SaveTraining) },
                 containerColor = MaterialTheme.colorScheme.primary,
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp) // Add elevation
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
             ) {
                 Icon(imageVector = Icons.Default.Save, contentDescription = "Save training")
             }
@@ -101,51 +104,67 @@ fun AddEditTrainingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            TransparentHintTextField(
-                text = trainingState.title,
-                hint = "Enter title...",
-                onValueChange = { viewModel.onEvent(AddEditTrainingsEvent.EnteredTitle(it)) },
-                onFocusChange = { viewModel.onEvent(AddEditTrainingsEvent.ChangeTitleFocus(it)) },
-                isHintVisible = trainingState.isTitleHintVisible,
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyLarge
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            TransparentHintTextField(
-                text = trainingState.weights ?: "",
-                hint = "Enter weights...",
-                onValueChange = { viewModel.onEvent(AddEditTrainingsEvent.EnteredWeight(it)) },
-                onFocusChange = { viewModel.onEvent(AddEditTrainingsEvent.ChangeWeightFocus(it)) },
-                isHintVisible = trainingState.isWeightHintVisible,
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyLarge
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = trainingState.failure,
-                    onCheckedChange = {
-                        viewModel.onEvent(
-                            AddEditTrainingsEvent.ChangeFailureState(
-                                it
-                            )
-                        )
-                    }
+            // Input Fields Container
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 )
-                Text(text = "Failure")
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                ) {
+                    TransparentHintTextField(
+                        text = trainingState.title,
+                        hint = "Enter title...",
+                        onValueChange = { viewModel.onEvent(AddEditTrainingsEvent.EnteredTitle(it)) },
+                        onFocusChange = { viewModel.onEvent(AddEditTrainingsEvent.ChangeTitleFocus(it)) },
+                        isHintVisible = trainingState.isTitleHintVisible,
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    TransparentHintTextField(
+                        text = trainingState.weights ?: "",
+                        hint = "Enter weights...",
+                        onValueChange = { viewModel.onEvent(AddEditTrainingsEvent.EnteredWeight(it)) },
+                        onFocusChange = { viewModel.onEvent(AddEditTrainingsEvent.ChangeWeightFocus(it)) },
+                        isHintVisible = trainingState.isWeightHintVisible,
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Checkbox(
+                            checked = trainingState.failure,
+                            onCheckedChange = {
+                                viewModel.onEvent(
+                                    AddEditTrainingsEvent.ChangeFailureState(
+                                        it
+                                    )
+                                )
+                            }
+                        )
+                        Text(text = "Failure")
+                    }
+                }
+
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // "Add Exercise" Button with Ripple and Elevation
+            // Add Exercise Button
             Button(
                 onClick = { showAddExerciseDialog = true },
                 modifier = Modifier.fillMaxWidth(),
@@ -153,8 +172,6 @@ fun AddEditTrainingsScreen(
             ) {
                 Text("Add Exercise")
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // AnimatedVisibility for Exercise List
             AnimatedVisibility(
