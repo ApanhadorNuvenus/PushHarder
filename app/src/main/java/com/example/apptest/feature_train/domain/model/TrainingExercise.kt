@@ -17,5 +17,6 @@ data class TrainingExercise(
     val trainingId: String,
     val exerciseId: Int,
     val failure: Boolean? = null, // Added nullable failure field
+    val weights: Float? = null,
     @PrimaryKey val id: String = UUID.randomUUID().toString()
 )

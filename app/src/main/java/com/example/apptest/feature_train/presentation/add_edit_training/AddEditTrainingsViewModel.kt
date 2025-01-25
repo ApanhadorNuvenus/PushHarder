@@ -60,8 +60,8 @@ class AddEditTrainingsViewModel @Inject constructor(
                             trainingId = training.id,
                             title = training.title,
                             date = training.date,
-                            failure = training.failure,
-                            weights = training.weights?.toString(),
+//                            failure = training.failure,
+//                            weights = training.weights?.toString(),
                             isTitleHintVisible = false
                         )
                         loadTrainingExercisesWithSets(trainingId)
@@ -73,14 +73,14 @@ class AddEditTrainingsViewModel @Inject constructor(
                     id = UUID.randomUUID().toString(),
                     title = "",
                     date = System.currentTimeMillis(),
-                    failure = false,
-                    weights = null
+//                    failure = false,
+//                    weights = null
                 )
                 _trainingState.value = trainingState.value.copy(
                     trainingId = currentTraining!!.id, // Set the new ID
                     date = currentTraining!!.date,
                     isTitleHintVisible = true,
-                    isWeightHintVisible = true
+//                    isWeightHintVisible = true
                 )
             }
         }
@@ -101,26 +101,7 @@ class AddEditTrainingsViewModel @Inject constructor(
                     isTitleHintVisible = !event.focusState.isFocused && trainingState.value.title.isBlank()
                 )
             }
-            is AddEditTrainingsEvent.EnteredWeight -> {
-                // Update temporary training
-                currentTraining = currentTraining?.copy(weights = event.value.toFloatOrNull())
-                _trainingState.value = trainingState.value.copy(
-                    weights = event.value,
-                    isWeightHintVisible = event.value.isBlank()
-                )
-            }
-            is AddEditTrainingsEvent.ChangeWeightFocus -> {
-                _trainingState.value = trainingState.value.copy(
-                    isWeightHintVisible = !event.focusState.isFocused && trainingState.value.weights.isNullOrBlank()
-                )
-            }
-            is AddEditTrainingsEvent.ChangeFailureState -> {
-                // Update temporary training
-                currentTraining = currentTraining?.copy(failure = event.value)
-                _trainingState.value = trainingState.value.copy(
-                    failure = event.value
-                )
-            }
+
             is AddEditTrainingsEvent.AddExercise -> {
                 val newTrainingExerciseId = UUID.randomUUID().toString()
                 val newTrainingExercise = TrainingExercise(
@@ -170,6 +151,41 @@ class AddEditTrainingsViewModel @Inject constructor(
                 }
                 _trainingExercisesWithSets.value = updatedExercises
             }
+            is AddEditTrainingsEvent.EnteredExerciseWeight -> {
+                val updatedExercises = _trainingExercisesWithSets.value.map { item ->
+                    if (item.trainingExercise.id == event.trainingExerciseId) {
+                        // Sanitize the input first
+                        val sanitizedValue = event.value.replace(",", ".") // Replace commas with dots
+                            .filter { it.isDigit() || it == '.' } // Allow only digits and dots
+
+                        // Allow only one dot and prevent multiple dots together
+                        var dotCount = 0
+                        val validatedValue = sanitizedValue.filter { char ->
+                            if (char == '.') {
+                                dotCount++
+                                dotCount <= 1
+                            } else {
+                                true
+                            }
+                        }
+
+                        item.copy(currentWeightInput = validatedValue)
+                    } else {
+                        item
+                    }
+                }
+                _trainingExercisesWithSets.value = updatedExercises
+            }
+            is AddEditTrainingsEvent.ChangeExerciseFailureState -> {
+                val updatedExercises = _trainingExercisesWithSets.value.map {
+                    if (it.trainingExercise.id == event.trainingExerciseId) {
+                        it.copy(currentFailureState = event.value) // Update failure state
+                    } else {
+                        it
+                    }
+                }
+                _trainingExercisesWithSets.value = updatedExercises
+            }
             is AddEditTrainingsEvent.SaveTraining -> {
                 // Now we save to DB
                 viewModelScope.launch {
@@ -205,7 +221,12 @@ class AddEditTrainingsViewModel @Inject constructor(
             }
 
             currentTrainingExercisesWithSets.forEach { item ->
-                val trainingExercise = item.trainingExercise.copy(trainingId = trainingId)
+                // --- MODIFIED TRAINING EXERCISE CREATION ---
+                val trainingExercise = item.trainingExercise.copy(
+                    trainingId = trainingId,
+                    weights = item.currentWeightInput.toFloatOrNull(), // Get weight from input state
+                    failure = item.currentFailureState // Get failure from state
+                )
                 trainingExercisesUseCases.addTrainingExercise(trainingExercise)
 
                 // Check which sets to delete for that TrainingExercise
@@ -234,9 +255,11 @@ class AddEditTrainingsViewModel @Inject constructor(
                     val exercise = exerciseUseCases.getExerciseById(trainingExercise.exerciseId).firstOrNull()
                     val sets = exerciseSetUseCases.getSetsForTrainingExercise(trainingExercise.id).firstOrNull().orEmpty()
                     TrainingExerciseWithSets(
-                        trainingExercise = trainingExercise,
+                        trainingExercise = trainingExercise.copy(failure = trainingExercise.failure ?: false, weights = trainingExercise.weights), // Ensure non-null values for existing data
                         exercise = exercise,
-                        sets = sets
+                        sets = sets,
+                        currentWeightInput = trainingExercise.weights?.toString() ?: "", // Initialize input from DB
+                        currentFailureState = trainingExercise.failure ?: false // Initialize failure from DB
                     )
                 }
                 _trainingExercisesWithSets.update { list }

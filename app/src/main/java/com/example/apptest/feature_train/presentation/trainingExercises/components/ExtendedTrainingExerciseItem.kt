@@ -11,22 +11,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.apptest.feature_train.domain.model.Exercise
 import com.example.apptest.feature_train.domain.model.ExerciseSet
 import com.example.apptest.feature_train.domain.model.TrainingExercise
 import com.example.apptest.feature_train.domain.use_case.exercise_use_case.ExerciseUseCases
-import kotlinx.coroutines.flow.collectLatest
+import com.example.apptest.feature_train.presentation.add_edit_training.components.TransparentHintTextField // Import
 
 @Composable
 fun ExtendedTrainingExerciseItem(
     trainingExercise: TrainingExercise,
+    currentWeightInput: String,
+    currentFailureState: Boolean,
     sets: List<ExerciseSet>,
     exerciseUseCases: ExerciseUseCases,
     modifier: Modifier = Modifier,
     onAddSet: () -> Unit = {},
     onDeleteSet: (ExerciseSet) -> Unit = {},
     onDeleteTrainingExercise: () -> Unit = {},
+    onWeightChanged: (String, String) -> Unit,
+    onFailureChanged: (String, Boolean) -> Unit
 ) {
     val exercise by exerciseUseCases.getExerciseById(trainingExercise.exerciseId).collectAsState(initial = null)
 
@@ -87,6 +92,38 @@ fun ExtendedTrainingExerciseItem(
                         onDelete = { onDeleteSet(set) }
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // --- ADD WEIGHT INPUT ---
+            TransparentHintTextField(
+                text = currentWeightInput, // Display current weight from input state
+                hint = "Weight (optional)",
+                onValueChange = { weightValue ->
+                    onWeightChanged(trainingExercise.id, weightValue) // Callback on weight change
+                },
+                onFocusChange = {  }, // Implement if needed
+                textStyle = MaterialTheme.typography.bodyMedium,
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                keyboardType = KeyboardType.Number
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // --- ADD FAILURE CHECKBOX ---
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Checkbox(
+                    checked = currentFailureState, // Use the state variable for immediate update
+                    onCheckedChange = { isChecked ->
+                        onFailureChanged(trainingExercise.id, isChecked)
+                    }
+                )
+                Text(text = "Failure")
             }
         }
     }

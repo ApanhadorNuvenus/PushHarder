@@ -101,6 +101,7 @@ fun CoolTrainingItem(
                 Column {
                     exercisesForTraining.forEach { item ->
                         CoolTrainingExerciseItem(
+                            trainingExercise = item.trainingExercise,
                             exercise = item.exercise,
                             sets = item.sets
                         )

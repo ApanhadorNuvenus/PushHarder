@@ -8,6 +8,8 @@ sealed class TrainingExercisesEvent {
     object RestoreExerciseTraining : TrainingExercisesEvent()
     data class AddTrainingExercise(
         val trainingId: String,
-        val exercise: Exercise
+        val exercise: Exercise,
+        val failure: Boolean?,
+        val weights: Float?
     ) : TrainingExercisesEvent()
 }

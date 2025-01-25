@@ -150,6 +150,7 @@ class TrainingsViewModel @Inject constructor(
                 trainings.forEach { training ->
                     loadTrainingExercisesWithSets(training.id)
                 }
+                _isLoading.value = false
             }
             .onCompletion {
                 viewModelScope.launch {

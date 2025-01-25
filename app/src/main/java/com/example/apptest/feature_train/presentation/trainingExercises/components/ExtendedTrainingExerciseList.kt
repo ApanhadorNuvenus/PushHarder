@@ -20,17 +20,23 @@ fun ExtendedTrainingExerciseList(
     onDeleteSet: (ExerciseSet) -> Unit,
     onDeleteTrainingExercise: (TrainingExercise) -> Unit,
     exerciseUseCases: ExerciseUseCases = hiltViewModel(),
+    onWeightChanged: (String, String) -> Unit, // ADDED
+    onFailureChanged: (String, Boolean) -> Unit // ADDED
 ) {
 
     LazyColumn {
         items(trainingExercisesWithSets) { item ->
             ExtendedTrainingExerciseItem(
                 trainingExercise = item.trainingExercise,
+                currentWeightInput = item.currentWeightInput,
+                currentFailureState = item.currentFailureState,
                 sets = item.sets,
                 exerciseUseCases = exerciseUseCases,
                 onAddSet = { onAddSet(item.trainingExercise) },
                 onDeleteSet = { set -> onDeleteSet(set) },
                 onDeleteTrainingExercise = {  onDeleteTrainingExercise(item.trainingExercise)  },
+                onWeightChanged = { trainingExerciseId, weight -> onWeightChanged(trainingExerciseId, weight) }, // Pass callback
+                onFailureChanged = { trainingExerciseId, failure -> onFailureChanged(trainingExerciseId, failure) } // Pass callback
             )
             Spacer(modifier = Modifier.height(8.dp))
         }

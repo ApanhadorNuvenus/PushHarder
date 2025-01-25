@@ -93,6 +93,7 @@ fun CoolStatsTrainingItem(
                 Column {
                     filteredExercises.forEach { item ->
                         CoolTrainingExerciseItem(
+                            trainingExercise = item.trainingExercise, // Pass trainingExercise here
                             exercise = item.exercise,
                             sets = item.sets
                         )

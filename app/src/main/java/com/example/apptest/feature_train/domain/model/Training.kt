@@ -8,8 +8,6 @@ import java.util.UUID
 data class Training(
     val title: String,
     val date: Long,
-    val failure: Boolean = false,
-    val weights: Float? = null,
     @PrimaryKey val id: String = UUID.randomUUID().toString() // Now a UUID string
 )
 

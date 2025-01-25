@@ -68,7 +68,9 @@ class TrainingExercisesViewModel @Inject constructor(
                         Log.e("!!!!!!!!!!!!!!!!!!", "OBTAINED TRAINING ID IS ${event.trainingId}")
                         val trainingExercise = TrainingExercise(
                             trainingId = event.trainingId,
-                            exerciseId = event.exercise.id ?: 0
+                            exerciseId = event.exercise.id ?: 0,
+                            failure = event.failure,
+                            weights = event.weights
                         )
                         trainingExerciseUseCases.addTrainingExercise(trainingExercise)
                         //reload after updating

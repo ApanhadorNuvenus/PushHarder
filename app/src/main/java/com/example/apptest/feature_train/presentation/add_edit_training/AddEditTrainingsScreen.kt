@@ -131,35 +131,6 @@ fun AddEditTrainingsScreen(
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    TransparentHintTextField(
-                        text = trainingState.weights ?: "",
-                        hint = "Enter weights...",
-                        onValueChange = { viewModel.onEvent(AddEditTrainingsEvent.EnteredWeight(it)) },
-                        onFocusChange = { viewModel.onEvent(AddEditTrainingsEvent.ChangeWeightFocus(it)) },
-                        isHintVisible = trainingState.isWeightHintVisible,
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Checkbox(
-                            checked = trainingState.failure,
-                            onCheckedChange = {
-                                viewModel.onEvent(
-                                    AddEditTrainingsEvent.ChangeFailureState(
-                                        it
-                                    )
-                                )
-                            }
-                        )
-                        Text(text = "Failure")
-                    }
                 }
 
             }
@@ -200,7 +171,13 @@ fun AddEditTrainingsScreen(
                             )
                         )
                     },
-                    exerciseUseCases = viewModel.exerciseUseCases
+                    exerciseUseCases = viewModel.exerciseUseCases,
+                    onWeightChanged = { trainingExerciseId, weight ->
+                        viewModel.onEvent(AddEditTrainingsEvent.EnteredExerciseWeight(trainingExerciseId, weight))
+                    },
+                    onFailureChanged = { trainingExerciseId, failure ->
+                        viewModel.onEvent(AddEditTrainingsEvent.ChangeExerciseFailureState(trainingExerciseId, failure))
+                    },
                 )
             }
 
