@@ -12,6 +12,5 @@ Check how your progress with maximum reps per set goes
 # What's planned - ToDo: #
 - [x] Sets feature - ability to add numerous amount of set per for exercises added to the training
 - [x] Statistics screen
-- [ ] Add goal line to stats screen
-- [ ] Add up arrow helper for the list; make db requests dispatchable
-- [ ] Add settings screen and ability to change fonts size across the app; add support for multiple screens
+- [x] Add goal line to stats screen
+- [ ] Release on GitHub and F-Droid
