@@ -50,7 +50,7 @@ fun StatsScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("Statistics", style = MaterialTheme.typography.headlineMedium)
+//        Text("Statistics", style = MaterialTheme.typography.headlineMedium)
 
         Spacer(modifier = Modifier.height(16.dp))
 

@@ -16,7 +16,6 @@
         <activity
             android:name=".feature_train.presentation.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.AppTest">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

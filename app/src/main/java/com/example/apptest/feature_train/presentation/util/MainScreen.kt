@@ -1,6 +1,7 @@
 package com.example.apptest.feature_train.presentation.util
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.ScatterPlot
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -20,6 +22,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
@@ -30,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,33 +51,39 @@ import com.example.apptest.feature_train.presentation.add_edit_exercises.AddEdit
 import com.example.apptest.feature_train.presentation.add_edit_training.AddEditTrainingsScreen
 import com.example.apptest.feature_train.presentation.exercises.ExercisesScreen
 import com.example.apptest.feature_train.presentation.exercises.ExercisesViewModel
+import com.example.apptest.feature_train.presentation.roundToTwoDecimalPlaces
 import com.example.apptest.feature_train.presentation.stats.StatsScreen
+import com.example.apptest.feature_train.presentation.trainings.TrainingsEvent
 import com.example.apptest.feature_train.presentation.trainings.TrainingsScreen
 import com.example.apptest.feature_train.presentation.trainings.TrainingsViewModel
 import com.example.apptest.feature_train.presentation.util.Screen
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     navController: NavHostController,
-    initialThemeMode: Int,
-    onThemeModeChange: (Int) -> Unit
+    themeMode: Int,
+    fontScale: Float,
+    onThemeModeChange: (Int) -> Unit,
+    onFontScaleChange: (Float) -> Unit
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val currentBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = remember { mutableStateOf(Screen.TrainingsScreen.route) }
-    var themeMode by remember { mutableStateOf(initialThemeMode) }
+    var currentThemeMode by remember { mutableStateOf(themeMode) }
+    var currentFontScale by remember { mutableStateOf(fontScale) }
 
     // Update currentRoute whenever the back stack changes
     currentBackStackEntry.value?.let { entry ->
         currentRoute.value = entry.destination.route ?: Screen.TrainingsScreen.route
     }
 
-    // Obtain TrainingsViewModel here
-    val trainingsViewModel: TrainingsViewModel = hiltViewModel()
+    // Obtain TrainingsViewModel in MainScreen so TopAppBar can access it
+    val trainingsViewModel: TrainingsViewModel = hiltViewModel() // <---- Obtain ViewModel HERE
 
     // Collect events from EventBus and refresh trainings
     LaunchedEffect(key1 = EventBus.events) {
@@ -156,9 +166,9 @@ fun MainScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     NavigationDrawerItem(
                         label = { Text("System Default") },
-                        selected = themeMode == 0,
+                        selected = currentThemeMode == 0,
                         onClick = {
-                            themeMode = 0
+                            currentThemeMode = 0
                             onThemeModeChange(0)
                             scope.launch { drawerState.close() }
                         },
@@ -171,9 +181,9 @@ fun MainScreen(
                     )
                     NavigationDrawerItem(
                         label = { Text("Light") },
-                        selected = themeMode == 1,
+                        selected = currentThemeMode == 1,
                         onClick = {
-                            themeMode = 1
+                            currentThemeMode = 1
                             onThemeModeChange(1)
                             scope.launch { drawerState.close() }
                         },
@@ -186,9 +196,9 @@ fun MainScreen(
                     )
                     NavigationDrawerItem(
                         label = { Text("Dark") },
-                        selected = themeMode == 2,
+                        selected = currentThemeMode == 2,
                         onClick = {
-                            themeMode = 2
+                            currentThemeMode = 2
                             onThemeModeChange(2)
                             scope.launch { drawerState.close() }
                         },
@@ -199,6 +209,35 @@ fun MainScreen(
                             )
                         }
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Font Size", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Scale: ",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Slider(
+                            value = currentFontScale,
+                            onValueChange = {
+                                currentFontScale = it.roundToTwoDecimalPlaces() // Round to 2 decimal places
+                                onFontScaleChange(currentFontScale)
+                            },
+                            valueRange = 0.4f..2.0f, // Keep value range
+                            steps = ((2.0f - 0.4f) / 0.1f).toInt() - 1, // Calculate steps dynamically
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "${DecimalFormat("#%").format(currentFontScale)}", // Display as percentage
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.weight(1f)) // Push the version info to the bottom
                     Text(
                         text = "Version: ${BuildConfig.VERSION_NAME}", // Display app version
@@ -225,6 +264,15 @@ fun MainScreen(
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Filled.Menu, contentDescription = "Open drawer")
                         }
+                    },
+                    actions = {
+                        if (currentRoute.value == Screen.TrainingsScreen.route)// <---- ACTIONS in TopAppBar
+                        IconButton(onClick = {
+                            // Trigger sorting options (toggle order section)
+                            trainingsViewModel.onEvent(TrainingsEvent.ToggleOrderSection) // <---- Call ViewModel Event!
+                        }) {
+                            Icon(Icons.Filled.Sort, contentDescription = "Sort Trainings")
+                        }
                     }
                 )
             }
@@ -235,7 +283,7 @@ fun MainScreen(
                 modifier = Modifier.padding(padding)
             ) {
                 composable(route = Screen.TrainingsScreen.route) {
-                    TrainingsScreen(navController = navController)
+                    TrainingsScreen(navController = navController, viewModel = trainingsViewModel) // <---- Pass ViewModel!
                 }
                 composable(route = Screen.ExercisesScreen.route) {
                     ExercisesScreen(navController = navController)

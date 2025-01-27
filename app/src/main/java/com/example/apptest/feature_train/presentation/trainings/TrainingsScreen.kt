@@ -1,9 +1,15 @@
 package com.example.apptest.feature_train.presentation.trainings
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -22,7 +27,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,8 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.apptest.feature_train.domain.model.Training
 import com.example.apptest.feature_train.presentation.trainings.components.CoolTrainingsList
@@ -47,7 +51,7 @@ import com.example.apptest.feature_train.presentation.util.Screen
 @Composable
 fun TrainingsScreen(
     navController: NavController,
-    viewModel: TrainingsViewModel = hiltViewModel()
+    viewModel: TrainingsViewModel
 ) {
     val state by viewModel.state
     val trainings by viewModel.trainingsState.collectAsState()
@@ -105,22 +109,13 @@ fun TrainingsScreen(
                     .padding(padding)
                     .padding(8.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
+                // Row and Text title REMOVED from here
+
+                AnimatedVisibility( // <---- AnimatedVisibility for OrderSection
+                    visible = state.isOrderSectionVisible,
+                    enter = fadeIn() + slideInVertically(),
+                    exit = fadeOut() + slideOutVertically()
                 ) {
-                    Text(
-                        text = "Trainings",
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Button(onClick = { viewModel.onEvent(TrainingsEvent.ToggleOrderSection) }) {
-                        Text("Order")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (state.isOrderSectionVisible) {
                     OrderSection(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -132,7 +127,12 @@ fun TrainingsScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                val spacerHeightDp: Dp by animateDpAsState( // <---- Animated Spacer Height
+                    targetValue = if (state.isOrderSectionVisible) 8.dp else 0.dp,
+                    animationSpec = tween(durationMillis = 300) // Match AnimatedVisibility duration for smoothness
+                )
+
+                Spacer(modifier = Modifier.height(spacerHeightDp)) // <---- Animated Spacer
 
                 CoolTrainingsList(
                     trainings = trainings,

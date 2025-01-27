@@ -123,40 +123,11 @@ fun ExercisesScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Exercises",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                IconButton(
-                    onClick = {
-                        viewModel.onEvent(ExercisesEvent.ToggleOrderSection)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Sort,
-                        contentDescription = "Sort"
-                    )
-                }
-            }
             AnimatedVisibility(
                 visible = state.isOrderSectionVisible,
                 enter = fadeIn() + slideInVertically(),
                 exit = fadeOut() + slideOutVertically()
             ) {
-//                ExerciseOrderSection(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(vertical = 16.dp),
-//                    exerciseOrder = state.exerciseOrder,
-//                    onOrderChange = {
-//                        viewModel.onEvent(ExercisesEvent.Order(it))
-//                    }
-//                )
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn(modifier = Modifier.fillMaxSize()) {

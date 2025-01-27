@@ -13,9 +13,9 @@ android {
     defaultConfig {
         applicationId = "com.example.apptest"
         minSdk = 27
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0 beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
