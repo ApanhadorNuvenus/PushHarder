@@ -56,6 +56,7 @@ class TrainingsViewModel @Inject constructor(
     val trainingsState: StateFlow<List<Training>> = _trainingsState.asStateFlow()
 
     private var dataLoaded = false
+    private var cachedTrainings: List<Training> = emptyList() // Cached trainings
 
     private val _pendingDeletionTrainings = MutableStateFlow<List<Training>>(emptyList())
     val pendingDeletionTrainings: StateFlow<List<Training>> = _pendingDeletionTrainings.asStateFlow()
@@ -87,7 +88,8 @@ class TrainingsViewModel @Inject constructor(
                 ) {
                     return
                 }
-                getTrainings(event.trainingOrder)
+                // Sort cached data instead of fetching again
+                sortTrainings(event.trainingOrder)
             }
             is TrainingsEvent.DeleteTraining -> {
                 trainingToDelete = event.training
@@ -133,6 +135,33 @@ class TrainingsViewModel @Inject constructor(
     fun refreshTrainings() {
         getTrainings(state.value.trainingOrder)
     }
+
+    private fun sortTrainings(trainingOrder: TrainingOrder) {
+        viewModelScope.launch {
+            val sortedTrainings = when (trainingOrder.orderType) {
+                is OrderType.Ascending -> {
+                    when (trainingOrder) {
+                        is TrainingOrder.Title -> cachedTrainings.sortedBy { it.title.lowercase() }
+                        is TrainingOrder.Date -> cachedTrainings.sortedBy { it.date }
+                        else -> cachedTrainings // Should not happen, but default case
+                    }
+                }
+                is OrderType.Descending -> {
+                    when (trainingOrder) {
+                        is TrainingOrder.Title -> cachedTrainings.sortedByDescending { it.title.lowercase() }
+                        is TrainingOrder.Date -> cachedTrainings.sortedByDescending { it.date }
+                        else -> cachedTrainings // Should not happen, default case
+                    }
+                }
+            }
+            _state.value = state.value.copy(
+                trainingOrder = trainingOrder
+            )
+            _trainingsState.value = sortedTrainings
+        }
+    }
+
+
     private fun getTrainings(trainingOrder: TrainingOrder) {
         Log.d("TrainingsViewModel", "getTrainings called")
         getTrainingsJob?.cancel()
@@ -147,6 +176,7 @@ class TrainingsViewModel @Inject constructor(
                     trainingOrder = trainingOrder
                 )
                 _trainingsState.value = trainings
+                cachedTrainings = trainings // Cache trainings here
                 trainings.forEach { training ->
                     loadTrainingExercisesWithSets(training.id)
                 }

@@ -2,15 +2,15 @@ package com.example.apptest.feature_train.presentation.stats.components
 
 import android.graphics.Paint
 import android.graphics.Typeface
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Canvas // REMOVE this import - not needed here
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.apptest.feature_train.domain.model.Exercise
 import com.example.apptest.feature_train.domain.model.Training
@@ -38,6 +39,7 @@ import com.github.mikephil.charting.renderer.LineChartRenderer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 @Composable
@@ -46,10 +48,12 @@ fun StatsPlot(
     selectedExerciseName: String?,
     trainingExercisesWithSets: Map<String, List<TrainingExerciseWithSets>>,
     onTrainingSelected: (Training?) -> Unit,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
     allExercises: List<Exercise>
 ) {
     val selectedExerciseGoal = allExercises.firstOrNull { it.name == selectedExerciseName }?.goal?.toFloat() ?: 0f
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+    val axisColor = MaterialTheme.colorScheme.onSurface.toArgb()
 
     val chartEntries = remember(trainings, selectedExerciseName, trainingExercisesWithSets) {
         trainings.mapIndexedNotNull { index, training ->
@@ -66,13 +70,14 @@ fun StatsPlot(
         }
     }
 
-    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
     val dataSet = remember(chartEntries) {
         LineDataSet(chartEntries, "Trainings").apply {
-            color = primaryColor
-            lineWidth = 2f
+            color = primaryColor.toArgb()
+            lineWidth = 4f // Increased line width
             setDrawCircles(false)
             setDrawValues(false)
+            this.isHighlightEnabled = true
+            highLightColor = primaryColor.toArgb()
         }
     }
 
@@ -95,8 +100,9 @@ fun StatsPlot(
         .height(300.dp)
         .clipToBounds()
 
-    // Use remember with a key to create a reference to the LineChart
-    val lineChart = remember(selectedExerciseGoal) { mutableStateOf<LineChart?>(null) }
+    // Use remember with a key that depends on the theme to recreate the chart
+    val lineChartKey = MaterialTheme.colorScheme
+    val lineChart = remember(lineChartKey) { mutableStateOf<LineChart?>(null) }
 
     if (chartEntries.isNotEmpty()) {
         Box(modifier = chartModifier) {
@@ -106,21 +112,23 @@ fun StatsPlot(
                     LineChart(context).apply {
                         lineChart.value = this // Store the LineChart instance
 
-                        val customRenderer = object : LineChartRenderer(this, animator, viewPortHandler) {
+                        // Custom Renderer - Define it HERE in factory for initialization
+                        renderer = object : LineChartRenderer(this, animator, viewPortHandler) {
                             override fun drawExtras(c: android.graphics.Canvas?) {
                                 super.drawExtras(c)
                                 drawCirclesAndText(c)
+                                drawGoalLine(c)
                             }
 
                             private fun drawCirclesAndText(c: android.graphics.Canvas?) {
                                 if (c == null) return
                                 val circleRadius = 25f // Radius in pixels
                                 val circlePaint = Paint().apply {
-                                    color = primaryColor
+                                    color = primaryColor.toArgb()
                                     style = Paint.Style.FILL
                                 }
                                 val textPaint = Paint().apply {
-                                    color = Color.White.toArgb()
+                                    color = onPrimaryColor.toArgb()
                                     textSize = 30f // Text size in pixels
                                     textAlign = Paint.Align.CENTER
                                     typeface = Typeface.DEFAULT_BOLD // Make text bold
@@ -151,77 +159,117 @@ fun StatsPlot(
                                     }
                                 }
                             }
+
+                            private fun drawGoalLine(c: android.graphics.Canvas?) {
+                                if (selectedExerciseGoal <= 0) return
+
+                                val yAxis = mChart.getAxis(YAxis.AxisDependency.LEFT)
+                                val goalLinePixel = mChart.getTransformer(YAxis.AxisDependency.LEFT)
+                                    .getPixelForValues(0f, selectedExerciseGoal)
+
+                                val textPaint = Paint().apply {
+                                    color = Color.Red.toArgb()
+                                    textSize = 35f
+                                    textAlign = Paint.Align.LEFT
+                                    isAntiAlias = true
+                                    typeface = Typeface.DEFAULT_BOLD
+                                }
+
+                                if (!goalLinePixel.y.isNaN() && !goalLinePixel.y.isInfinite()) {
+                                    val linePaint = Paint().apply {
+                                        color = Color.Red.toArgb()
+                                        strokeWidth = 8f
+                                        style = Paint.Style.STROKE
+                                    }
+
+                                    // Convert goalLinePixel.y (Double) to Float for drawLine and drawText
+                                    val goalLineY = goalLinePixel.y.toFloat()
+
+                                    c?.drawLine(0f, goalLineY, mChart.width.toFloat(), goalLineY, linePaint)
+
+                                    val text = "Goal: ${selectedExerciseGoal.toInt()}"
+                                    val textX = 16f
+                                    val textY = goalLineY - 16f // Use goalLineY (Float) for textY
+
+                                    c?.drawText(text, textX, textY, textPaint)
+                                }
+                            }
                         }
 
-                        renderer = customRenderer
-
-                        // Chart configuration
+                        // Chart configuration - Configure initial chart settings here in factory
                         data = lineData
-                        description.isEnabled = false
-                        xAxis.valueFormatter = IndexAxisValueFormatter(xAxisLabels)
-                        xAxis.position = XAxis.XAxisPosition.BOTTOM
-                        xAxis.setDrawGridLines(false)
-                        xAxis.granularity = 1f // Ensure at least one label is shown
-                        xAxis.setLabelCount(xAxisLabels.size, false) // Force all labels to be shown
 
-                        axisLeft.setDrawGridLines(false)
-                        axisRight.isEnabled = false
-                        legend.isEnabled = false
-                        setTouchEnabled(true)
-                        setPinchZoom(true)
-                        isDragEnabled = true
-                        setScaleEnabled(true)
+                        description.isEnabled = false // Disable description
+                        legend.isEnabled = false      // Disable legend
 
-                        // Set the value selected listener
+                        xAxis.apply {
+                            valueFormatter = IndexAxisValueFormatter(xAxisLabels)
+                            position = XAxis.XAxisPosition.BOTTOM
+                            setDrawGridLines(false)
+                            granularity = 1f
+                            setLabelCount(xAxisLabels.size, false)
+                            textColor = axisColor
+                            axisLineColor = axisColor
+                        }
+
+                        axisLeft.apply {
+                            setDrawGridLines(false)
+                            textColor = axisColor
+                            axisLineColor = axisColor
+                            axisMinimum = 0f // Ensure Y-axis starts at 0
+                        }
+
+                        axisRight.isEnabled = false // Disable right Y-axis
+
+                        setTouchEnabled(true)      // Enable touch gestures
+                        setPinchZoom(false)      // Disable pinch zoom
+                        isDragEnabled = true        // Enable dragging
+                        setScaleEnabled(false)     // Disable scaling
+
+                        // Set value selected listener
                         setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
                             override fun onValueSelected(e: Entry?, h: Highlight?) {
                                 val training = e?.data as? Training
                                 training?.let { onTrainingSelected(it) }
                             }
-
                             override fun onNothingSelected() {
-                                onTrainingSelected(null) // Or handle deselection as needed
+                                onTrainingSelected(null)
                             }
                         })
-                        setBackgroundColor(backgroundColor.toArgb())
                     }
                 },
                 update = { chart ->
-                    // Adjust X-Axis label positions after the chart has rendered
+                    // Update chart data and labels - Keep updates minimal
+                    chart.data = lineData
+
+                    // Update X-Axis labels in update block in case trainings list changes
                     chart.xAxis.valueFormatter = object : IndexAxisValueFormatter(xAxisLabels) {
                         override fun getFormattedValue(value: Float): String {
-                            // Find the closest actual x-value (entry position)
                             val closestIndex = xAxisLabelPositions.minByOrNull { kotlin.math.abs(it - value) } ?: value
                             val index = chartEntries.indexOfFirst { it.x == closestIndex }.takeIf { it >= 0 } ?: return ""
                             return xAxisLabels.getOrNull(index) ?: ""
                         }
                     }
 
-                    chart.data = lineData
-                    chart.notifyDataSetChanged()
-                    chart.invalidate()
+                    // Calculate Y-axis range based on goal and data - Recalculate on update
+                    val maxValue = max(
+                        chart.data.yMax,
+                        selectedExerciseGoal * 1.1f // Add 10% margin to goal
+                    )
+                    chart.axisLeft.axisMaximum = maxValue
+
+
+                    chart.xAxis.textColor = axisColor // Ensure axis colors are updated on theme change
+                    chart.axisLeft.textColor = axisColor
+                    chart.xAxis.axisLineColor = axisColor
+                    chart.axisLeft.axisLineColor = axisColor
+
+                    chart.notifyDataSetChanged() // Notify chart to refresh data
+                    chart.invalidate()          // Invalidate the chart to redraw
                 }
             )
 
-            // Goal line (draw only if chart is initialized and goal is set)
-            if (selectedExerciseGoal > 0) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    lineChart.value?.let { chart ->
-                        val yAxis = chart.axisLeft
-                        val goalLineY =
-                            size.height - (selectedExerciseGoal - yAxis.axisMinimum) / (yAxis.axisMaximum - yAxis.axisMinimum) * size.height
-
-                        if (!goalLineY.isNaN() && !goalLineY.isInfinite()) {
-                            drawLine(
-                                color = Color.Red,
-                                start = Offset(0f, goalLineY),
-                                end = Offset(size.width, goalLineY),
-                                strokeWidth = 5f
-                            )
-                        }
-                    }
-                }
-            }
+            // REMOVE Canvas block - Goal line is drawn in LineChartRenderer now
         }
     } else {
         Box(modifier = chartModifier, contentAlignment = Alignment.Center) {

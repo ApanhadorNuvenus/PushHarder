@@ -119,6 +119,9 @@ dependencies {
 
     // Accompanist to use with MPAndroidChart (for Compose integration)
     implementation (libs.accompanist.systemuicontroller)
+
+
+    implementation(libs.androidx.datastore.preferences)
 }
 
 kapt {

@@ -5,9 +5,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.ScatterPlot
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -22,9 +25,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,11 +56,16 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(navController: NavHostController) {
+fun MainScreen(
+    navController: NavHostController,
+    initialThemeMode: Int,
+    onThemeModeChange: (Int) -> Unit
+) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val currentBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = remember { mutableStateOf(Screen.TrainingsScreen.route) }
+    var themeMode by remember { mutableStateOf(initialThemeMode) }
 
     // Update currentRoute whenever the back stack changes
     currentBackStackEntry.value?.let { entry ->
@@ -138,6 +148,54 @@ fun MainScreen(navController: NavHostController) {
                             Icon(
                                 imageVector = Icons.Filled.ScatterPlot,
                                 contentDescription = "Statistics"
+                            )
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Theme Settings", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    NavigationDrawerItem(
+                        label = { Text("System Default") },
+                        selected = themeMode == 0,
+                        onClick = {
+                            themeMode = 0
+                            onThemeModeChange(0)
+                            scope.launch { drawerState.close() }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = "System Default Theme"
+                            )
+                        }
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Light") },
+                        selected = themeMode == 1,
+                        onClick = {
+                            themeMode = 1
+                            onThemeModeChange(1)
+                            scope.launch { drawerState.close() }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Filled.LightMode,
+                                contentDescription = "Light Theme"
+                            )
+                        }
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("Dark") },
+                        selected = themeMode == 2,
+                        onClick = {
+                            themeMode = 2
+                            onThemeModeChange(2)
+                            scope.launch { drawerState.close() }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Filled.DarkMode,
+                                contentDescription = "Dark Theme"
                             )
                         }
                     )

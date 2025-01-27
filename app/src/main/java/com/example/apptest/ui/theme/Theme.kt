@@ -17,51 +17,51 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = BluePrimaryDark,
     onPrimary = Color.White,
-    primaryContainer = PurpleGrey80,
+    primaryContainer = BluePrimary,
     onPrimaryContainer = Color.White,
-    secondary = PurpleGrey80,
+    secondary = RedAccentDark,
     onSecondary = Color.White,
-    secondaryContainer = PurpleGrey40,
+    secondaryContainer = RedAccent,
     onSecondaryContainer = Color.White,
     tertiary = Pink80,
     onTertiary = Color.White,
     tertiaryContainer = Pink40,
     onTertiaryContainer = Color.White,
-    error = Color(0xFFCF6679), // Example error color
+    error = Color(0xFFCF6679),
     onError = Color.White,
-    background = Color(0xFF1C1B1F),
+    background = GreyBackgroundDark,
     onBackground = Color.White,
-    surface = Color(0xFF1C1B1F),
+    surface = GreyBackgroundDark,
     onSurface = Color.White,
-    surfaceVariant = Color(0xFF49454F), // Lighter surface for cards, etc.
+    surfaceVariant = Color(0xFF49454F),
     onSurfaceVariant = Color.White,
-    outline = Color(0xFF938F99) // For borders and dividers
+    outline = Color(0xFF938F99)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
+    primary = BluePrimary,
     onPrimary = Color.White,
-    primaryContainer = Purple80,
+    primaryContainer = BluePrimaryLight,
     onPrimaryContainer = Color.Black,
-    secondary = PurpleGrey40,
+    secondary = RedAccent,
     onSecondary = Color.Black,
-    secondaryContainer = PurpleGrey80,
+    secondaryContainer = RedAccentLight,
     onSecondaryContainer = Color.Black,
     tertiary = Pink40,
     onTertiary = Color.Black,
     tertiaryContainer = Pink80,
     onTertiaryContainer = Color.Black,
-    error = Color(0xFFB00020), // Example error color
+    error = Color(0xFFB00020),
     onError = Color.White,
-    background = Color(0xFFFFFBFE),
+    background = GreyBackgroundLight,
     onBackground = Color(0xFF1C1B1F),
-    surface = Color(0xFFFFFBFE),
+    surface = GreyBackgroundLight,
     onSurface = Color(0xFF1C1B1F),
-    surfaceVariant = Color(0xFFE7E0EC), // Lighter surface for cards, etc.
+    surfaceVariant = Color(0xFFE7E0EC),
     onSurfaceVariant = Color(0xFF49454F),
-    outline = Color(0xFF79747E) // For borders and dividers
+    outline = Color(0xFF79747E)
 )
 
 @Composable
@@ -76,6 +76,7 @@ fun AppTestTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }

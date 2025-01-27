@@ -48,7 +48,7 @@ class StatsViewModel @Inject constructor(
         when (event) {
             is StatsEvent.SelectExercise -> {
                 _state.update { it.copy(selectedExerciseName = event.exerciseName) }
-                filterTrainingsByExercise(event.exerciseName)
+                filterTrainingsByExercise(event.exerciseName) // Call filter method here
             }
         }
     }
@@ -97,7 +97,7 @@ class StatsViewModel @Inject constructor(
         }
     }
 
-    private fun filterTrainingsByExercise(exerciseName: String) {
+    fun filterTrainingsByExercise(exerciseName: String) {
         viewModelScope.launch {
             val allTrainings = trainingUseCases.getAllTrainings().firstOrNull() ?: emptyList()
             val filteredTrainings = allTrainings.filter { training ->

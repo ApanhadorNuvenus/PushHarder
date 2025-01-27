@@ -1,10 +1,12 @@
 package com.example.apptest.feature_train.presentation
 
+import android.content.Context
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
@@ -15,43 +17,74 @@ import androidx.navigation.compose.rememberNavController
 import com.example.apptest.feature_train.presentation.util.MainScreen
 import com.example.apptest.ui.theme.AppTestTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+
+private val Context.dataStore by preferencesDataStore("settings")
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Enable higher refresh rate if available
-        setHigherRefreshRate()
+        // Read the saved theme mode from DataStore
+        val themeModeKey = intPreferencesKey("theme_mode")
+        val themeModeFlow = applicationContext.dataStore.data.map { preferences ->
+            preferences[themeModeKey] ?: 0 // Default to system theme
+        }
+        val initialThemeMode = runBlocking { themeModeFlow.first() }
 
         setContent {
-            AppTestTheme {
+            var themeMode by rememberSaveable { mutableIntStateOf(initialThemeMode) }
+
+            AppTestTheme(darkTheme = when (themeMode) {
+                1 -> false
+                2 -> true
+                else -> isSystemInDarkTheme()
+            }) {
                 Surface(
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    MainScreen(navController)
+                    MainScreen(navController, themeMode) { newMode ->
+                        themeMode = newMode
+                        // Save the new theme mode to DataStore
+                        runBlocking {
+                            applicationContext.dataStore.edit { preferences ->
+                                preferences[themeModeKey] = newMode
+                            }
+                        }
+                    }
                 }
             }
         }
+
+        // Enable higher refresh rate if available
+        setHigherRefreshRate()
     }
 
     private fun setHigherRefreshRate() {
-        val activity = this // or use 'this' directly if inside the Activity
+        val activity = this
         val window = activity.window
         val params = window.attributes
 
-        // Get the list of supported refresh rates
         val supportedModes = windowManager.defaultDisplay.supportedModes
 
-        // Find the highest supported refresh rate that is either 90Hz or 120Hz
-        var preferredRefreshRate = 60f // Default to 60Hz
+        var preferredRefreshRate = 60f
         for (mode in supportedModes) {
-            if (mode.refreshRate >= 119f) { // Check for 120Hz (allow for some float imprecision)
+            if (mode.refreshRate >= 119f) {
                 preferredRefreshRate = mode.refreshRate
-                break // Found 120Hz, no need to check further
-            } else if (mode.refreshRate >= 89f && preferredRefreshRate < 90f) { // Check for 90Hz
+                break
+            } else if (mode.refreshRate >= 89f && preferredRefreshRate < 90f) {
                 preferredRefreshRate = mode.refreshRate
             }
         }
