@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.croshapps.pushharder"
+    namespace = "com.crashapps.pushharder"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.croshapps.pushharder"
+        applicationId = "com.crashapps.pushharder"
         minSdk = 27
         targetSdk = 35
         versionCode = 1
