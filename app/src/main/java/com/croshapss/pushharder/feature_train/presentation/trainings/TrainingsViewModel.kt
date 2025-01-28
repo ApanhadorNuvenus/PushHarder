@@ -15,15 +15,12 @@ import com.croshapss.pushharder.feature_train.domain.util.TrainingOrder
 import com.croshapss.pushharder.feature_train.presentation.trainingExercises.TrainingExerciseWithSets
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.croshapss.pushharder.feature_train.presentation.util.Event
@@ -53,18 +50,13 @@ class TrainingsViewModel @Inject constructor(
     private val _trainingsState = MutableStateFlow<List<Training>>(emptyList())
     val trainingsState: StateFlow<List<Training>> = _trainingsState.asStateFlow()
 
-    private var dataLoaded = false
     private var cachedTrainings: List<Training> = emptyList() // Cached trainings
 
     private val _pendingDeletionTrainings = MutableStateFlow<List<Training>>(emptyList())
     val pendingDeletionTrainings: StateFlow<List<Training>> = _pendingDeletionTrainings.asStateFlow()
 
     init {
-        Log.d("TrainingsViewModel", "ViewModel init block called")
-        if (!dataLoaded) {
-            getTrainings(TrainingOrder.Date(OrderType.Descending))
-            dataLoaded = true
-        }
+        getTrainings(TrainingOrder.Date(OrderType.Descending))
         observeExerciseUpdates()
     }
 
@@ -130,7 +122,9 @@ class TrainingsViewModel @Inject constructor(
             _pendingDeletionTrainings.value = emptyList()
         }
     }
+
     fun refreshTrainings() {
+        // Just reload the data, no need to reset anything
         getTrainings(state.value.trainingOrder)
     }
 
@@ -159,15 +153,10 @@ class TrainingsViewModel @Inject constructor(
         }
     }
 
-
     private fun getTrainings(trainingOrder: TrainingOrder) {
         Log.d("TrainingsViewModel", "getTrainings called")
         getTrainingsJob?.cancel()
         getTrainingsJob = trainingUseCases.getAllTrainings(trainingOrder)
-            .onStart {
-                _isLoading.value = true
-                delay(500)
-            }
             .onEach { trainings ->
                 _state.value = state.value.copy(
                     trainings = trainings,
@@ -178,22 +167,13 @@ class TrainingsViewModel @Inject constructor(
                 trainings.forEach { training ->
                     loadTrainingExercisesWithSets(training.id)
                 }
-                _isLoading.value = false
-            }
-            .onCompletion {
-                viewModelScope.launch {
-                    delay(550L)
-                    _isLoading.value = false
-                }
             }
             .launchIn(viewModelScope)
     }
 
     private fun loadTrainingExercisesWithSets(trainingId: String) {
         viewModelScope.launch {
-            trainingExerciseUseCases.getExercisesForTraining(trainingId).onStart{
-                _isLoading.value = true
-            }.collect { trainingExercises ->
+            trainingExerciseUseCases.getExercisesForTraining(trainingId).collect { trainingExercises ->
                 val list = trainingExercises.map { trainingExercise ->
                     val exercise = exerciseUseCases.getExerciseById(trainingExercise.exerciseId).firstOrNull()
                     val sets = exerciseSetUseCases.getSetsForTrainingExercise(trainingExercise.id).firstOrNull().orEmpty()
@@ -206,7 +186,6 @@ class TrainingsViewModel @Inject constructor(
                 val updatedMap = _trainingExercisesWithSets.value.toMutableMap()
                 updatedMap[trainingId] = list
                 _trainingExercisesWithSets.value = updatedMap
-                _isLoading.value = false
             }
         }
     }

@@ -41,10 +41,11 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
+//import androidx.compose.runtime.composable
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
-import com.croshapss.pushharder.BuildConfig
+import com.croshapps.pushharder.BuildConfig
 import com.croshapss.pushharder.feature_train.presentation.add_edit_exercises.AddEditExercisesScreen
 import com.croshapss.pushharder.feature_train.presentation.add_edit_training.AddEditTrainingsScreen
 import com.croshapss.pushharder.feature_train.presentation.exercises.ExercisesScreen
@@ -101,12 +102,12 @@ fun MainScreen(
                         selected = currentRoute.value == Screen.TrainingsScreen.route,
                         onClick = {
                             scope.launch { drawerState.close() }
+                            // REVERTED: Removed trainingsViewModel.refreshTrainings()
                             navController.navigate(Screen.TrainingsScreen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                                popUpTo(Screen.TrainingsScreen.route) {
+                                    inclusive = true
                                 }
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         icon = {
@@ -123,10 +124,10 @@ fun MainScreen(
                             scope.launch { drawerState.close() }
                             navController.navigate(Screen.ExercisesScreen.route){
                                 popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+//                                    saveState = true
                                 }
                                 launchSingleTop = true
-                                restoreState = true
+//                                restoreState = true
                             }
                         },
                         icon = {
@@ -247,11 +248,13 @@ fun MainScreen(
             topBar = {
                 TopAppBar(
                     title = {
-                        val title = when (currentRoute.value) {
-                            Screen.TrainingsScreen.route -> "Trainings"
-                            Screen.ExercisesScreen.route -> "Exercises"
-                            Screen.StatsScreen.route -> "Statistics"
-                            else -> "Trainings"
+                        val title = when {
+                            currentRoute.value == Screen.TrainingsScreen.route -> "Trainings"
+                            currentRoute.value.startsWith(Screen.AddEditTrainingScreen.route) -> "Edit training" // Modified line
+                            currentRoute.value == Screen.ExercisesScreen.route -> "Exercises"
+                            currentRoute.value == Screen.StatsScreen.route -> "Statistics"
+                            currentRoute.value.startsWith(Screen.AddEditExerciseScreen.route) -> "Edit exercise" // Modified line
+                            else -> "is that even a screen?"
                         }
                         Text(title)
                     },
@@ -262,12 +265,12 @@ fun MainScreen(
                     },
                     actions = {
                         if (currentRoute.value == Screen.TrainingsScreen.route)// <---- ACTIONS in TopAppBar
-                        IconButton(onClick = {
-                            // Trigger sorting options (toggle order section)
-                            trainingsViewModel.onEvent(TrainingsEvent.ToggleOrderSection) // <---- Call ViewModel Event!
-                        }) {
-                            Icon(Icons.Filled.Sort, contentDescription = "Sort Trainings")
-                        }
+                            IconButton(onClick = {
+                                // Trigger sorting options (toggle order section)
+                                trainingsViewModel.onEvent(TrainingsEvent.ToggleOrderSection) // <---- Call ViewModel Event!
+                            }) {
+                                Icon(Icons.Filled.Sort, contentDescription = "Sort Trainings")
+                            }
                     }
                 )
             }

@@ -27,15 +27,17 @@ fun AddEditExercisesScreen(
     val scaffoldState = remember { SnackbarHostState() }
 
     LaunchedEffect(key1 = true) {
-        viewModel.eventFlow.collectLatest { event ->
-            when (event) {
+        viewModel.eventFlow.collect { event ->
+            when(event) {
+                is AddEditExercisesViewModel.UiEvent.SaveExercise -> {
+                    // Set result to trigger dialog upon return
+                    navController.previousBackStackEntry?.savedStateHandle?.set("exerciseCreated", true)
+                    navController.popBackStack()
+                }
                 is AddEditExercisesViewModel.UiEvent.ShowSnackbar -> {
                     scaffoldState.showSnackbar(
                         message = event.message
                     )
-                }
-                is AddEditExercisesViewModel.UiEvent.SaveExercise -> {
-                    navController.navigateUp()
                 }
             }
         }

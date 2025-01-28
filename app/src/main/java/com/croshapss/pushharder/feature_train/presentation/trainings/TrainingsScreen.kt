@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -58,8 +59,8 @@ fun TrainingsScreen(
     val pendingDeletionTrainings by viewModel.pendingDeletionTrainings.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    var showDialog by remember { mutableStateOf(false) }
-    var trainingToDelete by remember { mutableStateOf<Training?>(null) }
+    var showDialog by rememberSaveable { mutableStateOf(false) }
+    var trainingToDelete by rememberSaveable { mutableStateOf<Training?>(null) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -76,7 +77,7 @@ fun TrainingsScreen(
             val result = snackbarHostState.showSnackbar(
                 message = "Training ${training.title} deleted",
                 actionLabel = "Undo",
-                duration = SnackbarDuration.Long
+                duration = SnackbarDuration.Short
             )
             when (result) {
                 SnackbarResult.ActionPerformed -> {

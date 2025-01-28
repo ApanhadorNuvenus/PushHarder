@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -36,7 +37,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -45,7 +48,14 @@ import com.croshapss.pushharder.feature_train.domain.model.TrainingExercise
 import com.croshapss.pushharder.feature_train.presentation.add_edit_training.components.AddSetDialog
 import com.croshapss.pushharder.feature_train.presentation.add_edit_training.components.TransparentHintTextField
 import com.croshapss.pushharder.feature_train.presentation.trainingExercises.components.ExtendedTrainingExerciseList
+import com.croshapss.pushharder.feature_train.presentation.util.Event
+import com.croshapss.pushharder.feature_train.presentation.util.EventBus
+import com.croshapss.pushharder.feature_train.presentation.util.Screen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +74,24 @@ fun AddEditTrainingsScreen(
     // Collect exercises for the dropdown
     LaunchedEffect(key1 = viewModel) {
         viewModel.exerciseUseCases.getAllExercises().collect { exercises = it }
+    }
+
+    val exerciseCreated by remember(navController) {
+        // Get StateFlow from savedStateHandle or use a default MutableStateFlow
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.getStateFlow<Boolean>("exerciseCreated", false)
+            ?: MutableStateFlow(false)
+    }.collectAsState()
+
+    LaunchedEffect(exerciseCreated) {
+        if (exerciseCreated) {
+            showAddExerciseDialog = true
+            // Reset the flag after showing the dialog
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.set("exerciseCreated", false)
+        }
     }
 
     LaunchedEffect(key1 = true) {
@@ -178,25 +206,52 @@ fun AddEditTrainingsScreen(
             // Dialog for adding a new exercise
             if (showAddExerciseDialog) {
                 AlertDialog(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
                     onDismissRequest = { showAddExerciseDialog = false },
                     title = { Text("Select Exercise to Add") },
                     text = {
-                        LazyColumn {
-                            items(exercises) { exercise ->
+                        if (exercises.isEmpty()) {
+                            // If no exercises, show "Add Exercise" button
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
                                 Text(
-                                    text = exercise.name,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            viewModel.onEvent(
-                                                AddEditTrainingsEvent.AddExercise(
-                                                    exercise
-                                                )
-                                            )
-                                            showAddExerciseDialog = false
-                                        }
-                                        .padding(8.dp)
+                                    "No exercises available.",
+                                    modifier = Modifier.padding(bottom = 16.dp)
                                 )
+                                Button(
+                                    onClick = {
+                                        showAddExerciseDialog = false
+                                        navController.navigate(Screen.AddEditExerciseScreen.route)
+                                    },
+                                    elevation = ButtonDefaults.buttonElevation(
+                                        defaultElevation = 4.dp
+                                    )
+                                ) {
+                                    Text("Add New Exercise")
+                                }
+                            }
+                        } else {
+                            LazyColumn {
+                                items(exercises) { exercise ->
+                                    Text(
+                                        text = exercise.name,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                viewModel.onEvent(
+                                                    AddEditTrainingsEvent.AddExercise(
+                                                        exercise
+                                                    )
+                                                )
+                                                showAddExerciseDialog = false
+                                            }
+                                            .padding(8.dp)
+                                    )
+                                }
                             }
                         }
                     },
